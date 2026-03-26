@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seyoawe-engine
+  labels:
+    app: seyoawe-engine
+spec:
+  serviceName: "seyoawe-engine"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seyoawe-engine
+  template:
+    metadata:
+      labels:
+        app: seyoawe-engine
+    spec:
+      containers:
+        - name: seyoawe-engine
+          image: devoeoe23ops/seyoawe-engine:latest
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          volumeMounts:
+            - name: engine-storage
+              mountPath: /app/data
+  volumeClaimTemplates:
+    - metadata:
+        name: engine-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
