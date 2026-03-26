@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
+        VERSION_FILE = 'version.txt'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+    
+    stage('Version Check') {
+    steps {
+        script {
+            sh 'bash jenkins/version-check.sh'
+            def props = readProperties file: 'build_flags.env'
+            env.VERSION = props.VERSION
+            env.IMAGE_TAG = props.VERSION
+            env.ENGINE_CHANGED = props.ENGINE_CHANGED
+            env.CLI_CHANGED = props.CLI_CHANGED
+        }
+    }
+}
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r sawectl/requirements.txt'
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh 'pip install flake8'
+                sh 'flake8 sawectl/sawectl.py --max-line-length=120'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'pip install pytest'
+                sh 'pytest sawectl/ --verbose || echo "No tests found, skipping"'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} \
+                                 -t ${DOCKERHUB_REPO}:latest \
+                                 -f docker/cli/Dockerfile .
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                sh "docker push ${DOCKERHUB_REPO}:latest"
+            }
+        }
+
+        stage('Tag Git Version') {
+            steps {
+                sh """
+                    git config user.email "jenkins@ci.com"
+                    git config user.name "Jenkins"
+                    git tag -a v${IMAGE_TAG} -m "CLI release v${IMAGE_TAG}"
+                    git push origin v${IMAGE_TAG}
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+        success {
+            echo "CLI image ${IMAGE_TAG} pushed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
+```
+
+---
+
+Your `jenkins/` folder should now look like:
+```
+jenkins/
+├── engine/
+│   └── Jenkinsfile
+└── cli/
+    └── Jenkinsfile

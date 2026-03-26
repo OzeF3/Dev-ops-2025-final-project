@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-engine'
+        VERSION_FILE = 'version.txt'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+    stage('Version Check') {
+    steps {
+        script {
+            sh 'bash jenkins/version-check.sh'
+            def props = readProperties file: 'build_flags.env'
+            env.VERSION = props.VERSION
+            env.IMAGE_TAG = props.VERSION
+            env.ENGINE_CHANGED = props.ENGINE_CHANGED
+            env.CLI_CHANGED = props.CLI_CHANGED
+        }
+    }
+}
+
+        stage('Lint') {
+            steps {
+                sh 'pip install flake8'
+                sh 'flake8 modules/ --max-line-length=120 --ignore=E501'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} \
+                                 -t ${DOCKERHUB_REPO}:latest \
+                                 -f docker/engine/Dockerfile .
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                sh "docker push ${DOCKERHUB_REPO}:latest"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+        success {
+            echo "Engine image ${IMAGE_TAG} pushed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
