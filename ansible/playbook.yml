@@ -1,0 +1,37 @@
+---
+- name: Configure seyoawe engine server
+  hosts: seyoawe_servers
+  become: true
+
+  tasks:
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        mv kubectl /usr/local/bin/kubectl
+
+    - name: Pull seyoawe engine image from Docker Hub
+      shell: docker pull devoeoe23ops/seyoawe-engine:latest
+
+    - name: Run seyoawe engine container
+      shell: |
+        docker run -d \
+          --name seyoawe-engine \
+          --restart always \
+          -p 5000:5000 \
+          devoeoe23ops/seyoawe-engine:latest
