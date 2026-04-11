@@ -138,3 +138,80 @@ def test_load_module_manifest_valid():
             yaml.dump(manifest, f)
         result = load_module_manifest(tmpdir, 'test_module')
     assert result['name'] == 'test_module'
+
+# === TEST CLI VERSION ===
+
+def test_cli_version():
+    from sawectl import VERSION
+    assert VERSION is not None
+    assert isinstance(VERSION, str)
+    assert len(VERSION) > 0
+
+
+# === TEST CLI ENTRY POINT ===
+
+def test_cli_no_args_exits():
+    with pytest.raises(SystemExit):
+        with patch('sys.argv', ['sawectl']):
+            from sawectl import main
+            main()
+
+
+# === TEST WORKFLOW VALIDATION - VALID WORKFLOW ===
+
+def test_validate_step_valid_no_action():
+    step = {
+        'id': 'step1',
+        'type': 'action'
+    }
+    ok, msg = validate_step(step, 'modules', {})
+    assert ok
+    assert 'step1' in msg
+
+
+# === TEST DUPLICATE STEP DETECTION ===
+
+def test_load_yaml_returns_dict():
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        yaml.dump({'workflow': {'name': 'test', 'steps': []}}, f)
+        f.flush()
+        result = load_yaml(f.name)
+    assert isinstance(result, dict)
+    assert 'workflow' in result
+    os.unlink(f.name)
+
+
+# === TEST MODULE MANIFEST STRUCTURE ===
+
+def test_module_manifest_has_methods():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        module_dir = Path(tmpdir) / 'email_module'
+        module_dir.mkdir()
+        manifest = {
+            'name': 'email_module',
+            'methods': [
+                {'name': 'send', 'arguments': [{'name': 'to', 'required': True}]}
+            ]
+        }
+        with open(module_dir / 'module.yaml', 'w') as f:
+            yaml.dump(manifest, f)
+        result = load_module_manifest(tmpdir, 'email_module')
+    assert 'methods' in result
+    assert result['methods'][0]['name'] == 'send'
+
+
+# === TEST EXTRACT MODULE - EDGE CASES ===
+
+def test_extract_module_empty_string():
+    module, method = extract_module_and_method('', {})
+    assert module is None
+    assert method is None
+
+
+def test_extract_module_context_missing_module():
+    context_modules = {
+        'my_slack': {}  # missing 'module' key
+    }
+    module, method = extract_module_and_method('context.my_slack.send', context_modules)
+    assert module is None
+    assert method is None
