@@ -43,8 +43,7 @@ pipeline {
 
         stage('Unit Tests') {
             steps {
-                sh 'pip install pytest'
-                sh 'pytest sawectl/ --verbose || echo "No tests found, skipping"'
+                sh 'pytest sawectl/ --verbose'
             }
         }
 
