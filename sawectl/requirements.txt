@@ -2,3 +2,8 @@ pyyaml
 jsonschema
 requests
 argparse
+pyyaml
+jsonschema
+requests
+argparse
+pytest
