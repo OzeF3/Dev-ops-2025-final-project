@@ -83,7 +83,7 @@ pipeline {
 
     post {
         success {
-            echo "CD Pipeline completed! Engine deployed at ${env.ENGINE_IP}:5000"
+            echo "CD Pipeline completed! Engine deployed at ${env.ENGINE_IP}:8080" 
         }
         failure {
             echo "CD Pipeline failed!"

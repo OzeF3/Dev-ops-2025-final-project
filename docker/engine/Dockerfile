@@ -1,5 +1,9 @@
 FROM ubuntu:22.04
 
+# what i cahnged:
+    ## EXPOSE 5000 -> EXPOSE 8080
+    ## CMD ["/app/run.sh"] → CMD ["/app/seyoawe"]
+
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
@@ -19,12 +23,8 @@ COPY modules/ /app/modules/
 COPY configuration/ /app/configuration/
 COPY workflows/ /app/workflows/
 
-# Copy run script
-COPY run.sh /app/run.sh
-RUN chmod +x /app/run.sh
+# Expose the correct engine port
+EXPOSE 8080
 
-# Expose the engine port (adjust if needed)
-EXPOSE 5000
-
-# Start the engine
-CMD ["/app/run.sh"]
+# Start the engine directly
+CMD ["/app/seyoawe"]
