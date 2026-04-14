@@ -55,19 +55,19 @@ class API:
                 "data": None
             }
 
-    def blocking_call(self, method, url, headers=None, params=None, body=None,
+    def blocking_call(self, method, url, headers=None, params=None, json=None,
                       poll_interval_seconds=None, timeout_minutes=None,
                       polling_mode="status_code", expected_status_code=200, success_condition=None):
         
-        poll_interval_seconds = poll_interval_seconds or self.config.get("poll_interval_seconds", 10)
-        timeout_minutes = timeout_minutes or self.config.get("timeout_minutes", 5)
+        poll_interval_seconds = poll_interval_seconds or self.config.get("blocking_defaults", {}).get("poll_interval_seconds", 5)
+        timeout_minutes = timeout_minutes or self.config.get("blocking_defaults", {}).get("timeout_minutes", 3)
         headers = headers or self.config.get("headers")
 
         deadline = datetime.utcnow() + timedelta(minutes=timeout_minutes)
 
         while datetime.utcnow() < deadline:
             try:
-                response = requests.request(method, url, headers=headers, params=params, json=body)
+                response = requests.request(method, url, headers=headers, params=params, json=json)
 
                 if polling_mode == "status_code":
                     if response.status_code == expected_status_code:

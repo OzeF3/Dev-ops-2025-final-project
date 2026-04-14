@@ -60,6 +60,7 @@ class Command:
                 "message": "Command executed successfully",
                 "data": {
                     "stdout": result.stdout.strip(),
+                    "stderr": result.stderr.strip(),
                     "exit_code": result.returncode
                 }
             }

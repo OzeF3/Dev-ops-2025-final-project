@@ -74,6 +74,7 @@ class Git:
             self.repo.git.checkout("-b", self.branch)
     def create_branch(self):
         self.repo.git.checkout("-b", self.branch)
+        self.repo.git.push("--set-upstream", "origin", self.branch)
         return {
             "status": "ok",
             "message": f"Branch '{self.branch}' created successfully",
@@ -170,7 +171,7 @@ class Git:
             if pr["head"]["ref"] == self.branch and pr["state"] == "open":
                 pr_number = pr["number"]
                 merge_url = f"{api_url}/{pr_number}/merge"
-                merge = requests.put(merge_url, headers=headers, json={"merge_method": "squash"})
+                merge = requests.put(merge_url, headers=headers, json={"merge_method": "merge"})
                 if merge.status_code not in [200, 201]:
                     logger.error(f"[GIT] Merge failed: {merge.text}")
                     return {"status": "fail", "message": merge.text, "data": None}

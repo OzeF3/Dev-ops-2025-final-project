@@ -92,8 +92,10 @@ class Email:
         # Send email
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
                 if self.smtp_user and self.smtp_pass:
-                    server.starttls()
                     server.login(self.smtp_user, self.smtp_pass)
                 server.sendmail(self.from_addr, to, msg.as_string())
 

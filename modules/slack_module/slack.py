@@ -68,7 +68,6 @@ class Slack:
                     })
 
         payload = {
-            "channel": channel,
             "text": title,
             "attachments": [
                 {
@@ -100,7 +99,6 @@ class Slack:
             return {"status": "fail", "message": "Missing webhook URL", "data": None}
 
         payload = {
-            "channel": channel,
             "text": message,
             "attachments": [
                 {

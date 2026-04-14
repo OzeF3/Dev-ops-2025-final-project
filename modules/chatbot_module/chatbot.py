@@ -92,8 +92,9 @@ class Chatbot:
             "model": model,
             "temperature": temperature,
             "max_tokens": 1000,
+            "system": system_prompt,
             "messages": [
-                {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
+                {"role": "user", "content": user_message}
             ]
         }
         response = requests.post(url, headers=headers, json=payload)
