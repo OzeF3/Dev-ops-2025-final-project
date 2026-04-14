@@ -14,19 +14,19 @@ pipeline {
                 checkout scm
             }
         }
-    
-    stage('Version Check') {
-    steps {
-        script {
-            sh 'bash jenkins/version-check.sh'
-            def props = readProperties file: 'build_flags.env'
-            env.VERSION = props.VERSION
-            env.IMAGE_TAG = props.VERSION
-            env.ENGINE_CHANGED = props.ENGINE_CHANGED
-            env.CLI_CHANGED = props.CLI_CHANGED
+
+        stage('Version Check') {
+            steps {
+                script {
+                    sh 'bash jenkins/version-check.sh'
+                    def props = readProperties file: 'build_flags.env'
+                    env.VERSION = props.VERSION
+                    env.IMAGE_TAG = props.VERSION
+                    env.ENGINE_CHANGED = props.ENGINE_CHANGED
+                    env.CLI_CHANGED = props.CLI_CHANGED
+                }
+            }
         }
-    }
-}
 
         stage('Install Dependencies') {
             steps {
@@ -44,6 +44,18 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 sh 'pytest sawectl/ --verbose'
+            }
+        }
+
+        stage('Build Linux Binary') {
+            steps {
+                sh '''
+                    pip install pyinstaller
+                    pyinstaller --onefile \
+                        --name sawectl \
+                        --distpath sawectl/binaries/linux \
+                        sawectl/sawectl.py
+                '''
             }
         }
 
@@ -89,14 +101,3 @@ pipeline {
         }
     }
 }
-```
-
----
-
-Your `jenkins/` folder should now look like:
-```
-jenkins/
-├── engine/
-│   └── Jenkinsfile
-└── cli/
-    └── Jenkinsfile

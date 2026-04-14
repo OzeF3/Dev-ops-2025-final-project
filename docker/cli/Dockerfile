@@ -1,23 +1,21 @@
-FROM python:3.11-slim
+FROM ubuntu:22.04
 
-# Set working directory
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy CLI source and requirements
-COPY sawectl/sawectl.py /app/sawectl.py
-COPY sawectl/requirements.txt /app/requirements.txt
+# Copy the built Linux binary
+COPY sawectl/binaries/linux/sawectl /app/sawectl
+RUN chmod +x /app/sawectl
+
+# Copy schemas needed by the CLI
 COPY sawectl/dsl.schema.json /app/dsl.schema.json
 COPY sawectl/module.schema.json /app/module.schema.json
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Make CLI executable
-RUN chmod +x /app/sawectl.py
-
-# Default command
-ENTRYPOINT ["python3", "/app/sawectl.py"]
-
+ENTRYPOINT ["/app/sawectl"]
 
 
 
