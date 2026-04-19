@@ -33,5 +33,5 @@
         docker run -d \
           --name seyoawe-engine \
           --restart always \
-          -p 5000:5000 \
+          -p 8080:8080 \
           devoeoe23ops/seyoawe-engine:latest

@@ -19,7 +19,7 @@ resource "aws_instance" "seyoawe_engine" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("~/Desktop/oz-seyoawe-key.pem")
+      private_key = file("/var/lib/jenkins/.ssh/oz-seyoawe-key.pem")
       host        = self.public_ip
     }
   }
@@ -37,8 +37,8 @@ resource "aws_security_group" "seyoawe_sg" {
   }
 
   ingress {
-    from_port   = 5000
-    to_port     = 5000
+    from_port   = 8080  
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

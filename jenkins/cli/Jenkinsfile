@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
-        VERSION_FILE = 'version.txt'
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+    DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
     }
 
     stages {
