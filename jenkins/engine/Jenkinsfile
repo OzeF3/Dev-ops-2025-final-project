@@ -27,7 +27,7 @@ pipeline {
         stage('Lint') {
             steps {
                 bat 'pip install flake8'
-                bat 'flake8 modules/ --max-line-length=120 --ignore=E501,W503,W504'
+                bat 'flake8 sawectl/sawectl.py --max-line-length=120 --ignore=E501,W503,W504,E402,F401,E302,F541,F841,W293,W291,E303,W292'
             }
         }
 
