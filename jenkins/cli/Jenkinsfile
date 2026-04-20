@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-    DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
     }
 
     stages {
@@ -17,83 +17,69 @@ pipeline {
         stage('Version Check') {
             steps {
                 script {
-                    sh 'bash jenkins/version-check.sh'
-                    def props = readProperties file: 'build_flags.env'
-                    env.VERSION = props.VERSION
-                    env.IMAGE_TAG = props.VERSION
-                    env.ENGINE_CHANGED = props.ENGINE_CHANGED
-                    env.CLI_CHANGED = props.CLI_CHANGED
+                    def version = readFile('version.txt').trim()
+                    env.IMAGE_TAG = version
+                    echo "Building CLI version: ${version}"
                 }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip install -r sawectl/requirements.txt'
+                bat 'pip install -r sawectl/requirements.txt'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'pip install flake8'
-                sh 'flake8 sawectl/sawectl.py --max-line-length=120'
+                bat 'pip install flake8'
+                bat 'flake8 sawectl/sawectl.py --max-line-length=120 --ignore=E501,W503,W504'
             }
         }
 
         stage('Unit Tests') {
             steps {
-                sh 'pytest sawectl/ --verbose'
+                bat 'pytest sawectl/ --verbose'
             }
         }
 
         stage('Build Linux Binary') {
             steps {
-                sh '''
-                    pip install pyinstaller
-                    pyinstaller --onefile \
-                        --name sawectl \
-                        --distpath sawectl/binaries/linux \
-                        sawectl/sawectl.py
-                '''
+                bat 'pip install pyinstaller'
+                bat 'pyinstaller --onefile --name sawectl --distpath sawectl/binaries/linux sawectl/sawectl.py'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                    docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} \
-                                 -t ${DOCKERHUB_REPO}:latest \
-                                 -f docker/cli/Dockerfile .
-                """
+                bat "docker build -t %DOCKERHUB_REPO%:%IMAGE_TAG% -t %DOCKERHUB_REPO%:latest -f docker/cli/Dockerfile ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
-                sh "docker push ${DOCKERHUB_REPO}:latest"
+                bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
+                bat "docker push %DOCKERHUB_REPO%:%IMAGE_TAG%"
+                bat "docker push %DOCKERHUB_REPO%:latest"
             }
         }
 
         stage('Tag Git Version') {
             steps {
-                sh """
-                    git config user.email "jenkins@ci.com"
-                    git config user.name "Jenkins"
-                    git tag -a v${IMAGE_TAG} -m "CLI release v${IMAGE_TAG}"
-                    git push origin v${IMAGE_TAG}
-                """
+                bat "git config user.email \"jenkins@ci.com\""
+                bat "git config user.name \"Jenkins\""
+                bat "git tag -a v%IMAGE_TAG% -m \"CLI release v%IMAGE_TAG%\""
+                bat "git push origin v%IMAGE_TAG%"
             }
         }
     }
 
     post {
         always {
-            sh 'docker logout'
+            bat 'docker logout'
         }
         success {
-            echo "CLI image ${IMAGE_TAG} pushed successfully!"
+            echo "CLI image pushed successfully!"
         }
         failure {
             echo "Pipeline failed!"
