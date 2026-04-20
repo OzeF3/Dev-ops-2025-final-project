@@ -13,12 +13,10 @@ class Slack:
 
     def send_info_message(self, channel, title, message=None, keyed_message=None,
                           flatten_form_result=False, color="info", webhook_url=None):
-        webhook_url = (
-            webhook_url
-            or self.context.get("slack_webhook_url")
-            or self.context.get("webhook_url")
-            or self.config.get("webhook_url")
-        )
+        webhook_url = (webhook_url or
+                       self.context.get("slack_webhook_url") or
+                       self.context.get("webhook_url") or
+                       self.config.get("webhook_url"))
         logger.info(f"[SLACK] Webhook URL: {webhook_url}")
 
         if not webhook_url:
@@ -87,11 +85,9 @@ class Slack:
             return {"status": "fail", "message": str(e), "data": None}
 
     def send_incident_message(self, channel, message, severity=None, oncall_user=None):
-        webhook_url = (
-            self.context.get("slack_webhook_url")
-            or self.context.get("webhook_url")
-            or self.config.get("webhook_url")
-        )
+        webhook_url = (self.context.get("slack_webhook_url") or
+                       self.context.get("webhook_url") or
+                       self.config.get("webhook_url"))
         logger.info(f"[SLACK] Webhook URL for incident: {webhook_url}")
 
         if not webhook_url:
