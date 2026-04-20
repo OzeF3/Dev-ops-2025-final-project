@@ -68,6 +68,8 @@ pipeline {
             steps {
                 bat "git config user.email \"jenkins@ci.com\""
                 bat "git config user.name \"Jenkins\""
+                bat "git tag -d v%IMAGE_TAG% || echo Tag does not exist locally"
+                bat "git push origin :refs/tags/v%IMAGE_TAG% || echo Tag does not exist remotely"
                 bat "git tag -a v%IMAGE_TAG% -m \"CLI release v%IMAGE_TAG%\""
                 bat "git push origin v%IMAGE_TAG%"
             }
