@@ -72,7 +72,7 @@ pipeline {
                     bat "git remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/OzeF3/Dev-ops-2025-final-project.git"
                     bat "git tag -d v%IMAGE_TAG% || echo Tag does not exist locally"
                     bat "git push origin :refs/tags/v%IMAGE_TAG% || echo Tag does not exist remotely"
-                    bat "git tag -a v%IMAGE_TAG% -m \"CLI release v%IMAGE_TAG%\""
+                    bat "git tag -a v%IMAGE_TAG% -m \"CLI release v%IMAGE_TAG%\" || echo Tag already exists locally"
                     bat "git push origin v%IMAGE_TAG%"
                 }
             }
