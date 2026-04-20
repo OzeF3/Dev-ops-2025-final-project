@@ -27,7 +27,7 @@ pipeline {
         stage('Lint') {
             steps {
                 bat 'pip install flake8'
-                bat 'flake8 modules/ --max-line-length=120 --ignore=E501'
+                bat 'flake8 modules/ --max-line-length=120 --ignore=E501,W503,W504'
             }
         }
 
