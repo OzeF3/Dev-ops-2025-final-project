@@ -6,6 +6,7 @@ from engine.utils.match_engine import extract_json_path, evaluate_operator
 
 logger = get_logger("api_module")
 
+
 class API:
     def __init__(self, context, **module_config):
         self.context = context
@@ -58,7 +59,6 @@ class API:
     def blocking_call(self, method, url, headers=None, params=None, json=None,
                       poll_interval_seconds=None, timeout_minutes=None,
                       polling_mode="status_code", expected_status_code=200, success_condition=None):
-        
         poll_interval_seconds = poll_interval_seconds or self.config.get("blocking_defaults", {}).get("poll_interval_seconds", 5)
         timeout_minutes = timeout_minutes or self.config.get("blocking_defaults", {}).get("timeout_minutes", 3)
         headers = headers or self.config.get("headers")

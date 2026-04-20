@@ -1,6 +1,5 @@
 import requests
 import ast
-import json
 from commons.logs import get_logger
 
 logger = get_logger("slack_module")
@@ -12,12 +11,13 @@ class Slack:
         self.config = module_config or {}
         logger.info(f"[SLACK] Initialized with config: {self.config}")
 
-    def send_info_message(self, channel, title, message=None, keyed_message=None, flatten_form_result=False, color="info", webhook_url=None):
+    def send_info_message(self, channel, title, message=None, keyed_message=None,
+                          flatten_form_result=False, color="info", webhook_url=None):
         webhook_url = (
-            webhook_url or
-            self.context.get("slack_webhook_url") or
-            self.context.get("webhook_url") or
-            self.config.get("webhook_url")
+            webhook_url
+            or self.context.get("slack_webhook_url")
+            or self.context.get("webhook_url")
+            or self.config.get("webhook_url")
         )
         logger.info(f"[SLACK] Webhook URL: {webhook_url}")
 
@@ -45,7 +45,7 @@ class Slack:
                         key = parsed.get("key")
                         value = parsed.get("value")
                     except Exception as e:
-                        logger.warning(f"[SLACK] Could not parse keyed_message item: {raw_item} → {e}")
+                        logger.warning(f"[SLACK] Could not parse keyed_message item: {raw_item} - {e}")
                         continue
                 else:
                     continue
@@ -88,9 +88,9 @@ class Slack:
 
     def send_incident_message(self, channel, message, severity=None, oncall_user=None):
         webhook_url = (
-            self.context.get("slack_webhook_url") or
-            self.context.get("webhook_url") or
-            self.config.get("webhook_url")
+            self.context.get("slack_webhook_url")
+            or self.context.get("webhook_url")
+            or self.config.get("webhook_url")
         )
         logger.info(f"[SLACK] Webhook URL for incident: {webhook_url}")
 

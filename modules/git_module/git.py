@@ -1,8 +1,7 @@
 import os
 import shutil
-import subprocess
-import re
 import json
+import re
 import requests
 from git import Repo
 from jinja2 import Environment, FileSystemLoader
@@ -13,6 +12,7 @@ config = get_config()
 MODULES_BASE = config["directories"]["modules"]
 
 logger = get_logger("git_module")
+
 
 class Git:
     def __init__(self, context, **module_config):
@@ -27,9 +27,9 @@ class Git:
         self.ssh_key = self.config.get("ssh_key")
         self.handle_existing_branch = self.config.get("handle_existing_branch", "fail")
         self.github_token = self.config.get("github_token") or context.get("github_token")
-        
+
         if not self.github_token:
-            logger.warning("[GIT] GitHub token not found in config or context – PR actions may fail.")
+            logger.warning("[GIT] GitHub token not found in config or context - PR actions may fail.")
 
         self.env = Environment(
             loader=FileSystemLoader(os.path.join(MODULES_BASE, "git_module", "templates")),
@@ -72,6 +72,7 @@ class Git:
                 raise Exception(f"Unknown handle_existing_branch value: {self.handle_existing_branch}")
         else:
             self.repo.git.checkout("-b", self.branch)
+
     def create_branch(self):
         self.repo.git.checkout("-b", self.branch)
         self.repo.git.push("--set-upstream", "origin", self.branch)
@@ -238,9 +239,9 @@ class Git:
                 try:
                     item = json.loads(item)
                 except Exception as e:
-                    logger.error(f"[GIT] Failed to parse item: {item} → {e}")
+                    logger.error(f"[GIT] Failed to parse item: {item} - {e}")
                     continue
-            
+
             logger.info(f"[GIT] Adding file from template: {item['template']} to {item['destination']}")
             template = self.env.get_template(item["template"])
             rendered = template.render(context=ctx)

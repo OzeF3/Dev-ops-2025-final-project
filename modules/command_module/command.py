@@ -5,6 +5,7 @@ from commons.logs import get_logger
 
 logger = get_logger("command_module")
 
+
 class Command:
     def __init__(self, context, **module_config):
         self.context = context
@@ -25,9 +26,11 @@ class Command:
                 pw_record = pwd.getpwnam(user)
                 uid = pw_record.pw_uid
                 gid = pw_record.pw_gid
+
                 def change_user():
                     os.setgid(gid)
                     os.setuid(uid)
+
                 preexec_fn = change_user
 
             result = subprocess.run(

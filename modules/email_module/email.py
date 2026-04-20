@@ -11,6 +11,7 @@ global_config = global_get_config()
 
 MODULES_BASE = global_config["directories"]["modules"]
 
+
 class Email:
     def __init__(self, context, **module_config):
         self.context = context

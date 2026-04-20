@@ -6,6 +6,7 @@ from commons.get_config import get_config
 logger = get_logger("webform_module")
 global_config = get_config()
 
+
 class Webform:
     def __init__(self, context, **module_config):
         self.context = context
