@@ -22,9 +22,9 @@ pipeline {
 
         stage('Deploy to Minikube') {
             steps {
-                bat "kubectl apply -f k8s/engine-pvc.yaml"
-                bat "kubectl apply -f k8s/engine-service.yaml"
-                bat "kubectl apply -f k8s/engine-statefulset.yaml"
+                bat "kubectl apply -f k8s/engine-pvc.yaml --validate=false"
+                bat "kubectl apply -f k8s/engine-service.yaml --validate=false"
+                bat "kubectl apply -f k8s/engine-statefulset.yaml --validate=false"
             }
         }
 
