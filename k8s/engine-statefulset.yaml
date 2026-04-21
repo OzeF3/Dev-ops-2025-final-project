@@ -19,17 +19,17 @@ spec:
         - name: seyoawe-engine
           image: devoeoe23ops/seyoawe-engine:latest
           ports:
-            - containerPort: 8080 ## changed from 5000 to 8080
+            - containerPort: 8080
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8080 ## changed from 5000 to 8080
+              path: /
+              port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8080 ## changed from 5000 to 8080
+              path: /
+              port: 8080
             initialDelaySeconds: 15
             periodSeconds: 5
           volumeMounts:
