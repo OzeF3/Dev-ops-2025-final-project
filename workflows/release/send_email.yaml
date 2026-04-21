@@ -1,7 +1,7 @@
 workflow:
   name: send_email
   trigger:
-    type: api
+    type: ad-hoc
   steps:
     - id: send_email
       type: action
