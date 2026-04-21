@@ -122,16 +122,27 @@ sets build flags to avoid unnecessary rebuilds.
 
 ---
 
-## Pipeline Success Screenshots
+## Jenkins Dashboard
 
-### Jenkins Dashboard - Both Pipelines Green
-![Jenkins Dashboard](docs/screenshots/JENKINS_DASHBOARD_SCREEN-SHOT.PNG)
+### Both Pipelines Green
+![Jenkins Dashboard](docs/screenshots/jenkins_dashboard_.PNG)
+
+---
+
+## Pipeline Success
 
 ### Engine CI Pipeline - All Stages Passed
-![Engine Pipeline Success](docs/screenshots/pipeline_success_screenshot.PNG)
+![Engine Pipeline Success](docs/screenshots/pipline_success-_engine_ci.PNG)
 
 ### CLI CI Pipeline - All Stages Passed
-![CLI Pipeline Success](docs/screenshots/pipeline_success_screenshot_CLI.PNG)
+![CLI Pipeline Success](docs/screenshots/pipline_success-cli-_ci_.PNG)
+
+---
+
+## Pipeline Failure
+
+### Engine CI Pipeline - Failed Build
+![Pipeline Failure](docs/screenshots/pipline_fail-_engine_ci.PNG)
 
 ---
 
