@@ -9,11 +9,6 @@ steps:
   - id: send_email
     type: email
     config:
-      smtp_host: "smtp.gmail.com"
-      smtp_port: 587
-      smtp_user: "oefraty@gmail.com"
-      smtp_pass: "{{ secrets.gmail_app_password }}"
-      from_addr: "oefraty@gmail.com"
       to: "{{ context.trigger.payload.to }}"
       subject: "{{ context.trigger.payload.subject }}"
       body: "{{ context.trigger.payload.body }}"
