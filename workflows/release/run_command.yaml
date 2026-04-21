@@ -1,13 +1,13 @@
-id: run_command
-name: "Run Command"
-description: "Runs a shell command on the server and returns the output"
-
-trigger:
-  type: api
-
-steps:
-  - id: run_command
-    type: command
-    config:
-      command: "{{ context.trigger.payload.command }}"
-      timeout: 30
+workflow:
+  name: run_command
+  trigger:
+    type: api
+  steps:
+    - id: run_command
+      type: action
+      action: command_module.Command.run
+      input:
+        shell: "bash"
+        command: "{{ context.trigger.payload.command }}"
+        working_dir: "/tmp"
+      register_output: command_output

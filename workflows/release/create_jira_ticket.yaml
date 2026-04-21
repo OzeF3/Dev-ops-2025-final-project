@@ -1,31 +1,29 @@
-id: create_jira_ticket
-name: "Create Jira Ticket"
-description: "Creates a Jira issue in the Seyoawe DevOps project via API"
-
-trigger:
-  type: api
-
-steps:
-  - id: create_jira_issue
+workflow:
+  name: create_jira_ticket
+  trigger:
     type: api
-    config:
-      method: POST
-      url: "https://oefraty.atlassian.net/rest/api/3/issue"
-      headers:
-        Content-Type: "application/json"
-        Authorization: "Basic {{ secrets.jira_basic_auth }}"
-      payload:
-        fields:
-          project:
-            key: "SEY"
-          summary: "{{ context.trigger.payload.summary }}"
-          description:
-            type: "doc"
-            version: 1
-            content:
-              - type: "paragraph"
-                content:
-                  - type: "text"
-                    text: "{{ context.trigger.payload.description }}"
-          issuetype:
-            name: "{{ context.trigger.payload.issue_type }}"
+  steps:
+    - id: create_jira_issue
+      type: action
+      action: api_module.Api.call
+      input:
+        method: POST
+        url: "https://oefraty.atlassian.net/rest/api/3/issue"
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Basic {{ context.trigger.payload.jira_auth }}"
+        payload:
+          fields:
+            project:
+              key: "SEY"
+            summary: "{{ context.trigger.payload.summary }}"
+            description:
+              type: "doc"
+              version: 1
+              content:
+                - type: "paragraph"
+                  content:
+                    - type: "text"
+                      text: "{{ context.trigger.payload.description }}"
+            issuetype:
+              name: "Task"

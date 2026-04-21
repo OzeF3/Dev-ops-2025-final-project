@@ -1,14 +1,12 @@
-id: send_email
-name: "Send Email"
-description: "Sends a real email notification via Gmail SMTP"
-
-trigger:
-  type: api
-
-steps:
-  - id: send_email
-    type: email
-    config:
-      to: "{{ context.trigger.payload.to }}"
-      subject: "{{ context.trigger.payload.subject }}"
-      body: "{{ context.trigger.payload.body }}"
+workflow:
+  name: send_email
+  trigger:
+    type: api
+  steps:
+    - id: send_email
+      type: action
+      action: email_module.Email.send_email
+      input:
+        to: "{{ context.trigger.payload.to }}"
+        subject: "{{ context.trigger.payload.subject }}"
+        body: "{{ context.trigger.payload.body }}"
