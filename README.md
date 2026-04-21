@@ -26,6 +26,8 @@ seyoawe-community/
 │   ├── engine/      # CI pipeline for the engine
 │   ├── cli/         # CI pipeline for the CLI
 │   ├── cd/          # CD pipeline (Terraform + Ansible + K8s)
+│   │   ├── Jenkinsfile        # AWS production CD pipeline
+│   │   └── Jenkinsfile.local  # Local Minikube CD pipeline
 │   └── version-check.sh
 ├── k8s/             # Kubernetes manifests
 ├── terraform/       # AWS infrastructure provisioning
@@ -103,7 +105,7 @@ python3 sawectl/sawectl.py init workflow my_workflow \
 8. Push to Docker Hub as `devoeoe23ops/seyoawe-cli:<version>`
 9. Tag Git with version
 
-### CD Pipeline
+### CD Pipeline (AWS)
 
 1. Checkout code
 2. Terraform init, plan, apply → provision EC2 on AWS (us-west-2)
@@ -111,6 +113,14 @@ python3 sawectl/sawectl.py init workflow my_workflow \
 4. Wait for EC2 to be ready
 5. Run Ansible playbook → install Docker & kubectl, pull image
 6. Deploy to Kubernetes using manifests
+
+### CD Pipeline (Local - Minikube)
+
+1. Checkout code
+2. Build Docker image
+3. Push to Docker Hub
+4. Deploy to Minikube using kubectl
+5. Verify deployment
 
 ---
 
@@ -124,7 +134,7 @@ sets build flags to avoid unnecessary rebuilds.
 
 ## Jenkins Dashboard
 
-### Both Pipelines Green
+### All 3 Pipelines Green
 ![Jenkins Dashboard](docs/screenshots/jenkins_dashboard_.PNG)
 
 ---
@@ -137,12 +147,25 @@ sets build flags to avoid unnecessary rebuilds.
 ### CLI CI Pipeline - All Stages Passed
 ![CLI Pipeline Success](docs/screenshots/pipline_success-cli-_ci_.PNG)
 
+### Local CD Pipeline - Engine Deployed to Minikube
+![CD Local Pipeline Success](docs/screenshots/pipeline_success-_cd-_local.PNG)
+
 ---
 
 ## Pipeline Failure
 
 ### Engine CI Pipeline - Failed Build
 ![Pipeline Failure](docs/screenshots/pipline_fail-_engine_ci.PNG)
+
+---
+
+## Kubernetes Deployment (Local - Minikube)
+
+### Pod Running (1/1)
+![Pod Running](docs/screenshots/Pod_Running.PNG)
+
+### Services & StatefulSet
+![Services](docs/screenshots/Services.PNG)
 
 ---
 
