@@ -22,16 +22,16 @@ pipeline {
 
         stage('Deploy to Minikube') {
             steps {
-                bat "kubectl apply -f k8s/engine-pvc.yaml --validate=false"
-                bat "kubectl apply -f k8s/engine-service.yaml --validate=false"
-                bat "kubectl apply -f k8s/engine-statefulset.yaml --validate=false"
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-pvc.yaml --validate=false"
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-service.yaml --validate=false"
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-statefulset.yaml --validate=false"
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                bat "kubectl get pods"
-                bat "kubectl get services"
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config get pods"
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config get services"
             }
         }
     }
