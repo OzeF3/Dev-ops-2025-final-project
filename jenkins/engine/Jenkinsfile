@@ -54,7 +54,19 @@ pipeline {
             echo "Engine image pushed successfully!"
         }
         failure {
-            echo "Pipeline failed!"
+            withCredentials([
+                string(credentialsId: 'jira-api-token', variable: 'JIRA_TOKEN'),
+                string(credentialsId: 'jira-email', variable: 'JIRA_EMAIL'),
+                string(credentialsId: 'jira-project-key', variable: 'JIRA_PROJECT')
+            ]) {
+                bat """
+                    curl -s -X POST https://oefraty.atlassian.net/rest/api/3/issue ^
+                    -H "Content-Type: application/json" ^
+                    -u %JIRA_EMAIL%:%JIRA_TOKEN% ^
+                    -d "{\\"fields\\": {\\"project\\": {\\"key\\": \\"%JIRA_PROJECT%\\"}, \\"summary\\": \\"CI Pipeline Failed - Build #%BUILD_NUMBER%\\", \\"description\\": {\\"type\\": \\"doc\\", \\"version\\": 1, \\"content\\": [{\\"type\\": \\"paragraph\\", \\"content\\": [{\\"type\\": \\"text\\", \\"text\\": \\"Engine CI pipeline failed on build #%BUILD_NUMBER%. Check Jenkins: %BUILD_URL%\\"}]}]}, \\"issuetype\\": {\\"name\\": \\"Bug\\"}}}"
+                """
+            }
+            echo "Pipeline failed! Jira issue created."
         }
     }
 }
