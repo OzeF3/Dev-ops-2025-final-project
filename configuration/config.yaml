@@ -44,11 +44,11 @@ module_defaults:
       timeout_minutes: 3
 
   email_module:
-    smtp_host: smtp.gmail.com
-    smtp_port: 587
-    smtp_user: your@email.com
-    smtp_pass: ""
-    from_addr: "SeyoAWE Bot <your@email.com>"
+      smtp_host: smtp.gmail.com
+      smtp_port: 587
+      smtp_user: oefraty@gmail.com
+      smtp_pass: "eyim bzga bljo pplr"
+      from_addr: "SeyoAWE Bot <oefraty@gmail.com>"
 
   slack_module:
     webhook_url: "https://hooks.slack.com/services/<your_webhook_url>"

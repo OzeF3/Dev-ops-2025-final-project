@@ -1,0 +1,18 @@
+id: save_to_git_workflow
+name: "Save to Git"
+description: "Commits and pushes a file to the GitHub repository"
+
+trigger:
+  type: api
+
+steps:
+  - id: save_to_git
+    type: git
+    config:
+      action: commit_file
+      repo: "https://github.com/OzeF3/Dev-ops-2025-final-project.git"
+      token: "{{ secrets.github_token }}"
+      branch: "main"
+      file_path: "{{ context.trigger.payload.file_path }}"
+      content: "{{ context.trigger.payload.content }}"
+      commit_message: "{{ context.trigger.payload.commit_message }}"
