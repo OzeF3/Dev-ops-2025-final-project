@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-engine'
+        IMAGE_TAG = '1.0.0'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat "docker build -t %DOCKERHUB_REPO%:%IMAGE_TAG% -t %DOCKERHUB_REPO%:latest -f docker/engine/Dockerfile ."
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            steps {
+                bat "kubectl apply -f k8s/engine-pvc.yaml"
+                bat "kubectl apply -f k8s/engine-service.yaml"
+                bat "kubectl apply -f k8s/engine-statefulset.yaml"
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat "kubectl get pods"
+                bat "kubectl get services"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Engine deployed to Minikube successfully!"
+        }
+        failure {
+            echo "Local CD Pipeline failed!"
+        }
+    }
+}
