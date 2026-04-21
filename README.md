@@ -4,16 +4,65 @@
 
 This project implements a full DevOps lifecycle around the Seyoawe automation engine.
 
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DevOps Architecture                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌──────────┐    push     ┌─────────────────────────────────────────┐ │
+│   │  GitHub  │────────────▶│              Jenkins                    │ │
+│   │  Source  │             │         CI/CD Orchestration             │ │
+│   │ Control  │             └──────────────┬──────────────────────────┘ │
+│   └──────────┘                            │                             │
+│                              ┌────────────┴────────────┐               │
+│                              │                         │               │
+│                    ┌─────────▼──────────┐  ┌──────────▼─────────┐     │
+│                    │   CI Pipeline      │  │   CD Pipeline       │     │
+│                    │ ─────────────────  │  │ ─────────────────── │     │
+│                    │ Engine: lint+build │  │ Terraform (AWS EC2) │     │
+│                    │ CLI: test+package  │  │ Ansible (config)    │     │
+│                    │ Version coupling   │  │ Local: Minikube     │     │
+│                    └────────┬───────────┘  └──────────┬──────────┘     │
+│                             │                         │               │
+│                             │ push                    │ deploy        │
+│                             ▼                         ▼               │
+│   ┌──────────────────────┐          ┌─────────────────────────────┐  │
+│   │      Docker Hub      │          │   Kubernetes (Minikube/EKS) │  │
+│   │   devoeoe23ops/      │◀─ pull ──│ ─────────────────────────── │  │
+│   │   seyoawe-engine     │          │  Engine StatefulSet (8080)  │  │
+│   │   seyoawe-cli        │          │  PersistentVolumeClaim (1Gi) │  │
+│   └──────────────────────┘          │  ClusterIP Service           │  │
+│                                     │  Pod: 1/1 Running            │  │
+│                                     └──────────────────────────────┘  │
+│                                                      │                 │
+│                                                      │ scrape          │
+│                                                      ▼                 │
+│                                     ┌──────────────────────────────┐  │
+│                                     │         Monitoring            │  │
+│                                     │  Prometheus + Grafana (3000) │  │
+│                                     │  Node Exporter               │  │
+│                                     └──────────────────────────────┘  │
+│                                                                         │
+│   ┌──────────────────┐    ┌──────────────────────────────────────────┐ │
+│   │   version.txt    │    │           sawectl CLI                    │ │
+│   │  Shared semver   │    │  22 unit tests · PyInstaller binary      │ │
+│   └──────────────────┘    └──────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Components
 
-- **GitHub** - source control
-- **Jenkins** - CI/CD pipelines
-- **Docker** - containerization
-- **Docker Hub** - container registry (devoeoe23ops)
-- **Terraform** - AWS EC2 provisioning
-- **Ansible** - server configuration
-- **Kubernetes** - application orchestration
-- **Prometheus & Grafana** - monitoring
+| Component | Tool | Purpose |
+|---|---|---|
+| Source control | GitHub | Code versioning, tags, webhooks |
+| CI/CD | Jenkins | Automated pipelines (local) |
+| Containerization | Docker | Engine & CLI containers |
+| Registry | Docker Hub (devoeoe23ops) | Published images |
+| Infrastructure | Terraform | AWS EC2 provisioning |
+| Configuration | Ansible | Server setup & Docker install |
+| Orchestration | Kubernetes (Minikube / EKS) | App deployment & scaling |
+| Monitoring | Prometheus + Grafana | Metrics & dashboards |
+| Version coupling | version.txt | Shared semantic version |
 
 ---
 
@@ -25,8 +74,8 @@ seyoawe-community/
 ├── jenkins/         # CI/CD pipeline definitions
 │   ├── engine/      # CI pipeline for the engine
 │   ├── cli/         # CI pipeline for the CLI
-│   ├── cd/          # CD pipeline (Terraform + Ansible + K8s)
-│   │   ├── Jenkinsfile        # AWS production CD pipeline
+│   ├── cd/          # CD pipelines
+│   │   ├── Jenkinsfile        # AWS production CD (Terraform + Ansible)
 │   │   └── Jenkinsfile.local  # Local Minikube CD pipeline
 │   └── version-check.sh
 ├── k8s/             # Kubernetes manifests
