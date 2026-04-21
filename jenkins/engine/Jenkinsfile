@@ -24,12 +24,6 @@ pipeline {
             }
         }
 
-        stage('Test Jira') {
-            steps {
-                bat 'exit 1'
-            }
-        }
-
         stage('Lint') {
             steps {
                 bat 'pip install flake8'
