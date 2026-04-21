@@ -1,4 +1,3 @@
-
 # Seyoawe Community - DevOps Final Project
 
 ## Architecture Overview
@@ -40,6 +39,48 @@ seyoawe-community/
 
 ---
 
+## How to Use the App
+
+### Prerequisites
+Install dependencies:
+```bash
+pip install -r sawectl/requirements.txt
+```
+
+### Function 1 - Run a Workflow
+Trigger a workflow against a running Seyoawe engine:
+```bash
+python3 sawectl/sawectl.py run \
+  --workflow workflows/samples/command_and_slack.yaml \
+  --server localhost:8080
+```
+
+### Function 2 - Validate a Workflow
+Deep-validate a workflow file against schema and module manifests:
+```bash
+python3 sawectl/sawectl.py validate-workflow \
+  --workflow workflows/samples/command_and_slack.yaml \
+  --verbose
+```
+
+### Function 3 - Validate All Modules
+Check all module manifests are valid:
+```bash
+python3 sawectl/sawectl.py validate-modules \
+  --modules modules/
+```
+
+### Function 4 - Initialize a New Workflow
+Create a new workflow template:
+```bash
+python3 sawectl/sawectl.py init workflow my_workflow \
+  --full \
+  --trigger api \
+  --modules-path modules/
+```
+
+---
+
 ## Pipeline Flow
 
 ### CI Pipeline (Engine)
@@ -53,12 +94,14 @@ seyoawe-community/
 ### CI Pipeline (CLI)
 
 1. Checkout code
-2. Version check - detect changed components
+2. Version check
 3. Install dependencies
-4. Lint & unit tests
-5. Build Docker image
-6. Push to Docker Hub as `devoeoe23ops/seyoawe-cli:<version>`
-7. Tag Git with version
+4. Lint
+5. Unit tests (22 tests)
+6. Build Linux binary with PyInstaller
+7. Build Docker image
+8. Push to Docker Hub as `devoeoe23ops/seyoawe-cli:<version>`
+9. Tag Git with version
 
 ### CD Pipeline
 
@@ -79,9 +122,22 @@ sets build flags to avoid unnecessary rebuilds.
 
 ---
 
+## Pipeline Success Screenshots
+
+### Jenkins Dashboard - Both Pipelines Green
+![Jenkins Dashboard](docs/screenshots/JENKINS_DASHBOARD_SCREEN-SHOT.PNG)
+
+### Engine CI Pipeline - All Stages Passed
+![Engine Pipeline Success](docs/screenshots/pipeline_success_screenshot.PNG)
+
+### CLI CI Pipeline - All Stages Passed
+![CLI Pipeline Success](docs/screenshots/pipeline_success_screenshot_CLI.PNG)
+
+---
+
 ## Monitoring
 
-Prometheus scrapes metrics from the engine on port 5000.
+Prometheus scrapes metrics from the engine on port 8080.
 Grafana runs on port 3000 with dashboards for engine health.
 
 To start monitoring:
@@ -97,5 +153,5 @@ docker-compose up -d
 
 - **Region:** us-west-2
 - **Instance type:** t2.micro
-- **AMI:** Ubuntu 24.04 LTS
+- **AMI:** Ubuntu 24.04 LTS (ami-0d76b909de1a0595d)
 - **Key pair:** oz-seyoawe-key
