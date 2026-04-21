@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-engine'
         IMAGE_TAG = '1.0.0'
     }
@@ -20,8 +21,17 @@ pipeline {
             }
         }
 
+        stage('Push to Docker Hub') {
+            steps {
+                bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
+                bat "docker push %DOCKERHUB_REPO%:%IMAGE_TAG%"
+                bat "docker push %DOCKERHUB_REPO%:latest"
+            }
+        }
+
         stage('Deploy to Minikube') {
             steps {
+                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config delete statefulset seyoawe-engine --ignore-not-found=true"
                 bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-pvc.yaml --validate=false"
                 bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-service.yaml --validate=false"
                 bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-statefulset.yaml --validate=false"
@@ -37,6 +47,9 @@ pipeline {
     }
 
     post {
+        always {
+            bat 'docker logout'
+        }
         success {
             echo "Engine deployed to Minikube successfully!"
         }
