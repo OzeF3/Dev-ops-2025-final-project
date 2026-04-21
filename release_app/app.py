@@ -32,9 +32,9 @@ def index():
 @app.route("/send-email", methods=["POST"])
 def send_email():
     data = request.json
-    to = data.get("to")
-    subject = data.get("subject")
-    body = data.get("body")
+    to = data.get("to", "").strip().replace('\xa0', ' ')
+    subject = data.get("subject", "").strip().replace('\xa0', ' ')
+    body = data.get("body", "").strip().replace('\xa0', ' ')
 
     if not all([to, subject, body]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
