@@ -1,12 +1,16 @@
 workflow:
-  name: send_email
-  trigger:
-    type: ad-hoc
-  steps:
-    - id: send_email
-      type: action
-      action: email_module.Email.send_email
-      input:
-        to: "{{ context.trigger.payload.to }}"
-        subject: "{{ context.trigger.payload.subject }}"
-        body: "{{ context.trigger.payload.body }}"
+    name: send_email
+    trigger:
+      type: api
+    context_variables:
+      to: "{{ payload.to }}"
+      subject: "{{ payload.subject }}"
+      body: "{{ payload.body }}"
+    steps:
+      - id: send_email
+        type: action
+        action: email_module.Email.send_email
+        input:
+          to: "{{ context.to }}"
+          subject: "{{ context.subject }}"
+          body: "{{ context.body }}"
