@@ -18,20 +18,9 @@ spec:
       containers:
         - name: seyoawe-engine
           image: devoeoe23ops/seyoawe-engine:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 5
           volumeMounts:
             - name: engine-storage
               mountPath: /app/data
