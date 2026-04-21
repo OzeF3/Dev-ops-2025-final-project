@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seyoawe Release App</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #1e1e2e;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --accent3: #10b981;
+      --accent4: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%);
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    header span {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: auto;
+      background: var(--surface);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .hero h2 {
+      font-size: 42px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .hero h2 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .card:nth-child(1)::before { background: var(--accent); }
+    .card:nth-child(2)::before { background: var(--accent2); }
+    .card:nth-child(3)::before { background: var(--accent3); }
+    .card:nth-child(4)::before { background: var(--accent4); }
+
+    .card:hover {
+      border-color: #2e2e4e;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .card:nth-child(1) .card-icon { background: rgba(124,58,237,0.15); }
+    .card:nth-child(2) .card-icon { background: rgba(6,182,212,0.15); }
+    .card:nth-child(3) .card-icon { background: rgba(16,185,129,0.15); }
+    .card:nth-child(4) .card-icon { background: rgba(245,158,11,0.15); }
+
+    .card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card-header p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    select option { background: var(--surface); }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .card:nth-child(1) .btn { background: var(--accent); color: white; }
+    .card:nth-child(2) .btn { background: var(--accent2); color: white; }
+    .card:nth-child(3) .btn { background: var(--accent3); color: white; }
+    .card:nth-child(4) .btn { background: var(--accent4); color: #0a0a0f; }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .result {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      display: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .result.success {
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--success);
+      display: block;
+    }
+
+    .result.error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--error);
+      display: block;
+    }
+
+    .result.loading {
+      background: rgba(100,116,139,0.1);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      border-top: 1px solid var(--border);
+      margin-top: 48px;
+    }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      header { padding: 16px 24px; }
+      .hero h2 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SW</div>
+  <h1>Seyoawe Release App</h1>
+  <span>v1.0.0 — DevOps Final Project</span>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Automation <span>Release Panel</span></h2>
+    <p>Trigger real automation workflows — email, Jira, Git, and command execution</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- Send Email -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📧</div>
+        <div>
+          <h3>Send Email</h3>
+          <p>Send real email via Gmail SMTP</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>To</label>
+        <input type="email" id="email-to" placeholder="recipient@example.com" value="oefraty@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" id="email-subject" placeholder="Email subject" value="Hello from Seyoawe!">
+      </div>
+      <div class="form-group">
+        <label>Body</label>
+        <textarea id="email-body" placeholder="Email body">This is an automated message sent by the Seyoawe Release App.</textarea>
+      </div>
+      <button class="btn" onclick="sendEmail()">Send Email</button>
+      <div class="result" id="email-result"></div>
+    </div>
+
+    <!-- Create Jira Ticket -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎫</div>
+        <div>
+          <h3>Create Jira Ticket</h3>
+          <p>Create issue in SEY project</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Summary</label>
+        <input type="text" id="jira-summary" placeholder="Issue summary" value="Automated ticket from Seyoawe">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="jira-description" placeholder="Issue description">This issue was created automatically by the Seyoawe Release App.</textarea>
+      </div>
+      <div class="form-group">
+        <label>Issue Type</label>
+        <select id="jira-type">
+          <option value="Task">Task</option>
+          <option value="Bug">Bug</option>
+          <option value="Story">Story</option>
+        </select>
+      </div>
+      <button class="btn" onclick="createJira()">Create Ticket</button>
+      <div class="result" id="jira-result"></div>
+    </div>
+
+    <!-- Save to Git -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">💾</div>
+        <div>
+          <h3>Save to Git</h3>
+          <p>Commit a file to GitHub</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>File Path</label>
+        <input type="text" id="git-path" placeholder="releases/notes.txt" value="releases/release_notes.txt">
+      </div>
+      <div class="form-group">
+        <label>Content</label>
+        <textarea id="git-content" placeholder="File content">Release notes from Seyoawe Release App - automated commit.</textarea>
+      </div>
+      <div class="form-group">
+        <label>Commit Message</label>
+        <input type="text" id="git-message" placeholder="Commit message" value="Automated commit from Seyoawe">
+      </div>
+      <button class="btn" onclick="saveToGit()">Save to Git</button>
+      <div class="result" id="git-result"></div>
+    </div>
+
+    <!-- Run Command -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">⚡</div>
+        <div>
+          <h3>Run Command</h3>
+          <p>Execute a safe shell command</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Command</label>
+        <input type="text" id="cmd-command" placeholder="e.g. date, uptime, df" value="uptime">
+      </div>
+      <div style="font-size:12px; color: var(--muted); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;">
+        Allowed: ls, pwd, echo, date, whoami, uname, df, free, uptime
+      </div>
+      <button class="btn" onclick="runCommand()">Run Command</button>
+      <div class="result" id="cmd-result"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Seyoawe DevOps Final Project — Oz Efraty — Rafael Advanced Defense Systems
+</footer>
+
+<script>
+  async function callApi(endpoint, data, resultId, btnEl) {
+    const result = document.getElementById(resultId);
+    btnEl.disabled = true;
+    result.className = 'result loading';
+    result.textContent = '⟳ Running...';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.status === 'ok') {
+        result.className = 'result success';
+        result.textContent = '✓ ' + json.message + (json.output ? '\n\n' + json.output : '') + (json.key ? '\n\nIssue: ' + json.key : '');
+      } else {
+        result.className = 'result error';
+        result.textContent = '✗ ' + json.message;
+      }
+    } catch (e) {
+      result.className = 'result error';
+      result.textContent = '✗ Connection error: ' + e.message;
+    } finally {
+      btnEl.disabled = false;
+    }
+  }
+
+  function sendEmail() {
+    callApi('/send-email', {
+      to: document.getElementById('email-to').value,
+      subject: document.getElementById('email-subject').value,
+      body: document.getElementById('email-body').value
+    }, 'email-result', event.target);
+  }
+
+  function createJira() {
+    callApi('/create-jira', {
+      summary: document.getElementById('jira-summary').value,
+      description: document.getElementById('jira-description').value,
+      issue_type: document.getElementById('jira-type').value
+    }, 'jira-result', event.target);
+  }
+
+  function saveToGit() {
+    callApi('/save-to-git', {
+      file_path: document.getElementById('git-path').value,
+      content: document.getElementById('git-content').value,
+      commit_message: document.getElementById('git-message').value
+    }, 'git-result', event.target);
+  }
+
+  function runCommand() {
+    callApi('/run-command', {
+      command: document.getElementById('cmd-command').value
+    }, 'cmd-result', event.target);
+  }
+</script>
+
+</body>
+</html>
