@@ -47,7 +47,7 @@ module_defaults:
       smtp_host: smtp.gmail.com
       smtp_port: 587
       smtp_user: oefraty@gmail.com
-      smtp_pass: "eyim bzga bljo pplr"
+      smtp_pass: "password"
       from_addr: "SeyoAWE Bot <oefraty@gmail.com>"
 
   slack_module:
