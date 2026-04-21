@@ -1,15 +1,20 @@
 workflow:
-  name: save_to_git
-  trigger:
-    type: api
-  steps:
-    - id: save_to_git
-      type: action
-      action: git_module.Git.commit_file
-      input:
-        repo: "https://github.com/OzeF3/Dev-ops-2025-final-project.git"
-        token: "{{ context.trigger.payload.github_token }}"
-        branch: "main"
-        file_path: "{{ context.trigger.payload.file_path }}"
-        content: "{{ context.trigger.payload.content }}"
-        commit_message: "{{ context.trigger.payload.commit_message }}"
+    name: save_to_git
+    trigger:
+      type: api
+    context_variables:
+      file_path: "{{ payload.file_path }}"
+      content: "{{ payload.content }}"
+      commit_message: "{{ payload.commit_message }}"
+      github_token: "{{ payload.github_token }}"
+    steps:
+      - id: save_to_git
+        type: action
+        action: git_module.Git.commit_file
+        input:
+          repo: "https://github.com/OzeF3/Dev-ops-2025-final-project.git"
+          token: "{{ context.github_token }}"
+          branch: "main"
+          file_path: "{{ context.file_path }}"
+          content: "{{ context.content }}"
+          commit_message: "{{ context.commit_message }}"

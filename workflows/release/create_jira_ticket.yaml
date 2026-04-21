@@ -1,29 +1,32 @@
 workflow:
-  name: create_jira_ticket
-  trigger:
-    type: api
-  steps:
-    - id: create_jira_issue
-      type: action
-      action: api_module.Api.call
-      input:
-        method: POST
-        url: "https://oefraty.atlassian.net/rest/api/3/issue"
-        headers:
-          Content-Type: "application/json"
-          Authorization: "Basic {{ context.trigger.payload.jira_auth }}"
-        payload:
-          fields:
-            project:
-              key: "SEY"
-            summary: "{{ context.trigger.payload.summary }}"
-            description:
-              type: "doc"
-              version: 1
-              content:
-                - type: "paragraph"
-                  content:
-                    - type: "text"
-                      text: "{{ context.trigger.payload.description }}"
-            issuetype:
-              name: "Task"
+    name: create_jira_ticket
+    trigger:
+      type: api
+    context_variables:
+      summary: "{{ payload.summary }}"
+      description: "{{ payload.description }}"
+    steps:
+      - id: create_jira_issue
+        type: action
+        action: api_module.Api.call
+        input:
+          method: POST
+          url: "https://oefraty.atlassian.net/rest/api/3/issue"
+          headers:
+            Content-Type: "application/json"
+            Authorization: "Basic {{ payload.jira_auth }}"
+          payload:
+            fields:
+              project:
+                key: "SEY"
+              summary: "{{ context.summary }}"
+              description:
+                type: "doc"
+                version: 1
+                content:
+                  - type: "paragraph"
+                    content:
+                      - type: "text"
+                        text: "{{ context.description }}"
+              issuetype:
+                name: "Task"

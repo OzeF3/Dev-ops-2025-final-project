@@ -1,13 +1,15 @@
 workflow:
-  name: run_command
-  trigger:
-    type: api
-  steps:
-    - id: run_command
-      type: action
-      action: command_module.Command.run
-      input:
-        shell: "bash"
-        command: "{{ context.trigger.payload.command }}"
-        working_dir: "/tmp"
-      register_output: command_output
+    name: run_command
+    trigger:
+      type: api
+    context_variables:
+      command: "{{ payload.command }}"
+    steps:
+      - id: run_command
+        type: action
+        action: command_module.Command.run
+        input:
+          shell: "bash"
+          command: "{{ context.command }}"
+          working_dir: "/tmp"
+        register_output: command_output
