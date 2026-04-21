@@ -13,15 +13,18 @@ import base64
 
 app = Flask(__name__)
 
+def clean(s):
+    return ''.join(c for c in (s or '') if ord(c) < 128).strip()
+
 # Config from environment variables
-GMAIL_USER = os.environ.get("GMAIL_USER", "")
-GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD", "")
-JIRA_BASE_URL = os.environ.get("JIRA_BASE_URL", "https://oefraty.atlassian.net")
-JIRA_EMAIL = os.environ.get("JIRA_EMAIL", "oefraty@gmail.com")
-JIRA_TOKEN = os.environ.get("JIRA_TOKEN", "")
-JIRA_PROJECT = os.environ.get("JIRA_PROJECT", "SEY")
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "OzeF3/Dev-ops-2025-final-project")
+GMAIL_USER = clean(os.environ.get("GMAIL_USER", ""))
+GMAIL_PASSWORD = clean(os.environ.get("GMAIL_PASSWORD", ""))
+JIRA_BASE_URL = clean(os.environ.get("JIRA_BASE_URL", "https://oefraty.atlassian.net"))
+JIRA_EMAIL = clean(os.environ.get("JIRA_EMAIL", "oefraty@gmail.com"))
+JIRA_TOKEN = clean(os.environ.get("JIRA_TOKEN", ""))
+JIRA_PROJECT = clean(os.environ.get("JIRA_PROJECT", "SEY"))
+GITHUB_TOKEN = clean(os.environ.get("GITHUB_TOKEN", ""))
+GITHUB_REPO = clean(os.environ.get("GITHUB_REPO", "OzeF3/Dev-ops-2025-final-project"))
 
 
 @app.route("/")
@@ -32,9 +35,9 @@ def index():
 @app.route("/send-email", methods=["POST"])
 def send_email():
     data = request.json
-    to = data.get("to", "").strip().replace('\xa0', ' ')
-    subject = data.get("subject", "").strip().replace('\xa0', ' ')
-    body = data.get("body", "").strip().replace('\xa0', ' ')
+    to = clean(data.get("to"))
+    subject = clean(data.get("subject"))
+    body = clean(data.get("body"))
 
     if not all([to, subject, body]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -61,9 +64,9 @@ def send_email():
 @app.route("/create-jira", methods=["POST"])
 def create_jira():
     data = request.json
-    summary = data.get("summary")
-    description = data.get("description")
-    issue_type = data.get("issue_type", "Task")
+    summary = clean(data.get("summary"))
+    description = clean(data.get("description"))
+    issue_type = clean(data.get("issue_type", "Task"))
 
     if not all([summary, description]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -102,9 +105,9 @@ def create_jira():
 @app.route("/save-to-git", methods=["POST"])
 def save_to_git():
     data = request.json
-    file_path = data.get("file_path")
-    content = data.get("content")
-    commit_message = data.get("commit_message", "Update from Seyoawe Release App")
+    file_path = clean(data.get("file_path"))
+    content = clean(data.get("content"))
+    commit_message = clean(data.get("commit_message", "Update from Seyoawe Release App"))
 
     if not all([file_path, content]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -138,7 +141,7 @@ def save_to_git():
 @app.route("/run-command", methods=["POST"])
 def run_command():
     data = request.json
-    command = data.get("command")
+    command = clean(data.get("command"))
 
     if not command:
         return jsonify({"status": "error", "message": "Missing command"}), 400
