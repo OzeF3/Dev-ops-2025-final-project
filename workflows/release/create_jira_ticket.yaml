@@ -1,4 +1,4 @@
-id: create_jira_ticket_workflow
+id: create_jira_ticket
 name: "Create Jira Ticket"
 description: "Creates a Jira issue in the Seyoawe DevOps project via API"
 

@@ -1,4 +1,4 @@
-id: save_to_git_workflow
+id: save_to_git
 name: "Save to Git"
 description: "Commits and pushes a file to the GitHub repository"
 

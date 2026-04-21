@@ -1,4 +1,4 @@
-id: send_email_workflow
+id: send_email
 name: "Send Email"
 description: "Sends a real email notification via Gmail SMTP"
 
