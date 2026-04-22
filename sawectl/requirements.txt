@@ -1,6 +1,5 @@
 pyyaml
 jsonschema
 requests
-argparse
 pytest
 pyinstaller
