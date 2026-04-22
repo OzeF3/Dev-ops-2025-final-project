@@ -2,13 +2,6 @@ workflow:
   name: send_email
   trigger:
     type: api
-  payload_parser:
-    - path: "to"
-      var: "to"
-    - path: "subject"
-      var: "subject"
-    - path: "body"
-      var: "body"
   context_variables:
     - name: to
       type: string
