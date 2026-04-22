@@ -2,6 +2,9 @@ pipeline {
     agent any
 
     environment {
+        // --- Tool paths (Jenkins service doesn't inherit user PATH) ---
+        PATH = "C:\\Users\\oz\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Hashicorp.Terraform_Microsoft.Winget.Source_8wekyb3d8bbwe;${env.PATH}"
+
         // --- Docker Hub ---
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_REPO        = 'devoeoe23ops/seyoawe-engine'
