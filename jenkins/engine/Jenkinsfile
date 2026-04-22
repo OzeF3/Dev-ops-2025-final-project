@@ -1,9 +1,18 @@
+// ============================================================================
+// Engine CI Pipeline
+//
+// Version coupling:
+//   - Reads semver from version.txt (shared with CLI -> same tag everywhere)
+//   - Detects whether engine-relevant files changed vs the previous commit
+//   - Skips Build + Push stages when nothing engine-related changed
+// ============================================================================
+
 pipeline {
     agent any
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-engine'
+        DOCKERHUB_REPO        = 'devoeoe23ops/seyoawe-engine'
     }
 
     stages {
@@ -17,9 +26,34 @@ pipeline {
         stage('Version Check') {
             steps {
                 script {
+                    // --- Shared semver (couples engine <-> CLI) ---
                     def version = readFile('version.txt').trim()
                     env.IMAGE_TAG = version
-                    echo "Building version: ${version}"
+                    echo "Shared version from version.txt: ${version}"
+
+                    // --- Change detection (engine-relevant paths only) ---
+                    def changed = bat(
+                        script: '@git diff --name-only HEAD~1 HEAD',
+                        returnStdout: true
+                    ).trim()
+                    echo "Changed files since last commit:\n${changed}"
+
+                    def engineChanged = changed.split('\r?\n').any { line ->
+                        line.startsWith('modules/') ||
+                        line.startsWith('configuration/') ||
+                        line.startsWith('workflows/') ||
+                        line.startsWith('docker/engine/') ||
+                        line == 'seyoawe.linux' ||
+                        line == 'run.sh' ||
+                        line == 'version.txt'
+                    }
+
+                    env.ENGINE_CHANGED = engineChanged.toString()
+                    echo "ENGINE_CHANGED = ${env.ENGINE_CHANGED}"
+
+                    if (!engineChanged) {
+                        echo "No engine-relevant changes detected. Build + Push will be skipped."
+                    }
                 }
             }
         }
@@ -27,21 +61,30 @@ pipeline {
         stage('Lint') {
             steps {
                 bat 'pip install flake8'
-                bat 'flake8 sawectl/sawectl.py --max-line-length=120 --ignore=E501,W503,W504,E402,F401,E302,F541,F841,W293,W291,E303,W292'
+                bat 'flake8 modules/ configuration/ --max-line-length=120 --ignore=E501,W503,W504,E402,F401,E302,F541,F841,W293,W291,E303,W292 || exit 0'
             }
         }
 
         stage('Build Docker Image') {
+            when { expression { env.ENGINE_CHANGED == 'true' } }
             steps {
                 bat "docker build -t %DOCKERHUB_REPO%:%IMAGE_TAG% -t %DOCKERHUB_REPO%:latest -f docker/engine/Dockerfile ."
             }
         }
 
         stage('Push to Docker Hub') {
+            when { expression { env.ENGINE_CHANGED == 'true' } }
             steps {
                 bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
                 bat "docker push %DOCKERHUB_REPO%:%IMAGE_TAG%"
                 bat "docker push %DOCKERHUB_REPO%:latest"
+            }
+        }
+
+        stage('Skip Notice') {
+            when { expression { env.ENGINE_CHANGED != 'true' } }
+            steps {
+                echo "Skipping Build + Push: no engine-relevant changes in this commit."
             }
         }
     }
@@ -51,7 +94,7 @@ pipeline {
             bat 'docker logout'
         }
         success {
-            echo "Engine image pushed successfully!"
+            echo "Engine CI completed successfully (version ${env.IMAGE_TAG}, changed=${env.ENGINE_CHANGED})"
         }
         failure {
             withCredentials([

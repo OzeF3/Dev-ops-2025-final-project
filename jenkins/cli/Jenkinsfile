@@ -1,9 +1,19 @@
+// ============================================================================
+// CLI CI Pipeline
+//
+// Version coupling:
+//   - Reads semver from version.txt (shared with engine -> same tag everywhere)
+//   - Detects whether CLI-relevant files changed vs the previous commit
+//   - Skips Build + Push + Git-tag stages when nothing CLI-related changed
+//   - Tests always run (cheap, prevents regressions)
+// ============================================================================
+
 pipeline {
     agent any
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-cli'
+        DOCKERHUB_REPO        = 'devoeoe23ops/seyoawe-cli'
     }
 
     stages {
@@ -17,9 +27,30 @@ pipeline {
         stage('Version Check') {
             steps {
                 script {
+                    // --- Shared semver (couples CLI <-> engine) ---
                     def version = readFile('version.txt').trim()
                     env.IMAGE_TAG = version
-                    echo "Building CLI version: ${version}"
+                    echo "Shared version from version.txt: ${version}"
+
+                    // --- Change detection (CLI-relevant paths only) ---
+                    def changed = bat(
+                        script: '@git diff --name-only HEAD~1 HEAD',
+                        returnStdout: true
+                    ).trim()
+                    echo "Changed files since last commit:\n${changed}"
+
+                    def cliChanged = changed.split('\r?\n').any { line ->
+                        line.startsWith('sawectl/') ||
+                        line.startsWith('docker/cli/') ||
+                        line == 'version.txt'
+                    }
+
+                    env.CLI_CHANGED = cliChanged.toString()
+                    echo "CLI_CHANGED = ${env.CLI_CHANGED}"
+
+                    if (!cliChanged) {
+                        echo "No CLI-relevant changes detected. Build + Push + Tag will be skipped."
+                    }
                 }
             }
         }
@@ -44,6 +75,7 @@ pipeline {
         }
 
         stage('Build Linux Binary') {
+            when { expression { env.CLI_CHANGED == 'true' } }
             steps {
                 bat 'pip install pyinstaller'
                 bat 'pyinstaller --onefile --name sawectl --distpath sawectl/binaries/linux sawectl/sawectl.py'
@@ -51,12 +83,14 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            when { expression { env.CLI_CHANGED == 'true' } }
             steps {
                 bat "docker build -t %DOCKERHUB_REPO%:%IMAGE_TAG% -t %DOCKERHUB_REPO%:latest -f docker/cli/Dockerfile ."
             }
         }
 
         stage('Push to Docker Hub') {
+            when { expression { env.CLI_CHANGED == 'true' } }
             steps {
                 bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
                 bat "docker push %DOCKERHUB_REPO%:%IMAGE_TAG%"
@@ -65,6 +99,7 @@ pipeline {
         }
 
         stage('Tag Git Version') {
+            when { expression { env.CLI_CHANGED == 'true' } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     bat "git config user.email \"jenkins@ci.com\""
@@ -72,8 +107,14 @@ pipeline {
                     bat "git remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/OzeF3/Dev-ops-2025-final-project.git"
                     bat "git tag -f -a v%IMAGE_TAG% -m \"CLI release v%IMAGE_TAG%\""
                     bat "git push -f origin v%IMAGE_TAG%"
-
                 }
+            }
+        }
+
+        stage('Skip Notice') {
+            when { expression { env.CLI_CHANGED != 'true' } }
+            steps {
+                echo "Skipping Build + Push + Tag: no CLI-relevant changes in this commit."
             }
         }
     }
@@ -83,7 +124,7 @@ pipeline {
             bat 'docker logout'
         }
         success {
-            echo "CLI image pushed successfully!"
+            echo "CLI CI completed successfully (version ${env.IMAGE_TAG}, changed=${env.CLI_CHANGED})"
         }
         failure {
             echo "Pipeline failed!"
