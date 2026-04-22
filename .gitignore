@@ -177,4 +177,10 @@ cython_debug/
 .pypirc
 
 
-release_app/.env
+release_app/.env# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+tfplan
+kubectl

@@ -2,9 +2,22 @@ pipeline {
     agent any
 
     environment {
+        // --- Docker Hub ---
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_REPO = 'devoeoe23ops/seyoawe-engine'
-        IMAGE_TAG = '1.0.0'
+        DOCKERHUB_REPO        = 'devoeoe23ops/seyoawe-engine'
+        IMAGE_TAG             = '1.0.0'
+
+        // --- Kubernetes ---
+        KUBECONFIG_PATH       = 'C:\\Users\\oz\\.kube\\config'
+        NAMESPACE             = 'seyoawe'
+
+        // --- Terraform credentials (injected as TF_VAR_* → Terraform picks these up automatically) ---
+        TF_VAR_gmail_user     = credentials('gmail-address')
+        TF_VAR_gmail_password = credentials('gmail-app-password')
+        TF_VAR_jira_email     = credentials('jira-email')
+        TF_VAR_jira_token     = credentials('jira-api-token')
+        TF_VAR_jira_project   = credentials('jira-project-key')
+        TF_VAR_github_token   = credentials('github-credentials')
     }
 
     stages {
@@ -14,6 +27,47 @@ pipeline {
                 checkout scm
             }
         }
+
+        // ========================================================
+        // Infrastructure layer — Terraform
+        // Provisions: namespace, ConfigMap, Secret
+        // ========================================================
+
+        stage('Terraform Init') {
+            steps {
+                dir('terraform/local') {
+                    bat 'terraform init -input=false'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform/local') {
+                    bat 'terraform plan -input=false -out=tfplan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('terraform/local') {
+                    bat 'terraform apply -input=false -auto-approve tfplan'
+                }
+            }
+        }
+
+        stage('Terraform Outputs') {
+            steps {
+                dir('terraform/local') {
+                    bat 'terraform output'
+                }
+            }
+        }
+
+        // ========================================================
+        // Application layer — Docker image
+        // ========================================================
 
         stage('Build Docker Image') {
             steps {
@@ -29,19 +83,30 @@ pipeline {
             }
         }
 
+        // ========================================================
+        // Deploy layer — apply K8s manifests into Terraform-provisioned namespace
+        // ========================================================
+
         stage('Deploy to Minikube') {
             steps {
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config delete statefulset seyoawe-engine --ignore-not-found=true"
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-pvc.yaml --validate=false"
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-service.yaml --validate=false"
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config apply -f k8s/engine-statefulset.yaml --validate=false"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% delete statefulset seyoawe-engine --ignore-not-found=true"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% apply -f k8s/engine-service.yaml --validate=false"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% apply -f k8s/engine-statefulset.yaml --validate=false"
+            }
+        }
+
+        stage('Wait for Pod Ready') {
+            steps {
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% wait --for=condition=Ready pod -l app=seyoawe-engine --timeout=180s"
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config get pods"
-                bat "kubectl --kubeconfig=C:\\Users\\oz\\.kube\\config get services"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% get pods -o wide"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% get services"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% get configmap engine-config"
+                bat "kubectl --kubeconfig=%KUBECONFIG_PATH% -n %NAMESPACE% get secret engine-secrets"
             }
         }
     }
@@ -51,7 +116,8 @@ pipeline {
             bat 'docker logout'
         }
         success {
-            echo "Engine deployed to Minikube successfully!"
+            echo "Engine deployed to Minikube successfully in namespace '${NAMESPACE}'"
+            echo "Port-forward: kubectl -n ${NAMESPACE} port-forward svc/seyoawe-engine 8080:8080"
         }
         failure {
             echo "Local CD Pipeline failed!"
