@@ -14,6 +14,9 @@ pipeline {
         KUBECONFIG_PATH       = 'C:\\Users\\oz\\.kube\\config'
         NAMESPACE             = 'seyoawe'
 
+        // --- Terraform Kubernetes provider ---
+        TF_VAR_kubeconfig_path = 'C:\\Users\\oz\\.kube\\config'
+
         // --- Terraform credentials (injected as TF_VAR_* → Terraform picks these up automatically) ---
         TF_VAR_gmail_user     = credentials('gmail-address')
         TF_VAR_gmail_password = credentials('gmail-app-password')
