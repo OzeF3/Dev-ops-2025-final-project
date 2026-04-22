@@ -21,6 +21,19 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+          # --- Health probes ---
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           # --- Non-sensitive config from Terraform-managed ConfigMap ---
           envFrom:
             - configMapRef:
