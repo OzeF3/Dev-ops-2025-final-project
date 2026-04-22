@@ -184,3 +184,4 @@ release_app/.env# Terraform
 *.tfstate.*
 tfplan
 kubectl
+release_app/.env
