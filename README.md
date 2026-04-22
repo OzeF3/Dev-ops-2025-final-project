@@ -1,68 +1,108 @@
-# Seyoawe Community - DevOps Final Project
+# SeyoAWE Community — DevOps Final Project
 
-## Architecture Overview
+**Author:** Oz Efraty
+**Repository:** https://github.com/OzeF3/Dev-ops-2025-final-project
+**Base project:** [yuribernstein/seyoawe-community](https://github.com/yuribernstein/seyoawe-community)
 
-This project implements a full DevOps lifecycle around the Seyoawe automation engine.
+A full DevOps lifecycle wrapped around the SeyoAWE workflow automation engine — CI/CD with Jenkins, container builds, Kubernetes deployment on Minikube, Terraform-managed infrastructure, and Prometheus/Grafana observability.
 
+---
+
+## Table of Contents
+
+1. [Architecture](#architecture)
+2. [What's Inside](#whats-inside)
+3. [Repository Structure](#repository-structure)
+4. [CI/CD Pipelines](#cicd-pipelines)
+5. [Version Coupling](#version-coupling)
+6. [Kubernetes Deployment](#kubernetes-deployment)
+7. [Release App (4 Functions)](#release-app-4-functions)
+8. [Observability](#observability)
+9. [How to Run](#how-to-run)
+10. [Known Limitations & Engineering Trade-offs](#known-limitations--engineering-trade-offs)
+11. [Screenshots](#screenshots)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph dev["Developer"]
+        GH[("GitHub<br/>source control")]
+    end
+
+    subgraph ci["Jenkins CI/CD (Windows)"]
+        ECI["seyoawe-engine-ci<br/>lint · build · push"]
+        CCI["seyoawe-cli-ci<br/>test · build · tag"]
+        CD["seyoawe-cd-local<br/>Terraform · build · deploy"]
+    end
+
+    subgraph registry["Docker Hub<br/>devoeoe23ops"]
+        IMG_E[("seyoawe-engine")]
+        IMG_C[("seyoawe-cli")]
+        IMG_R[("seyoawe-release-app")]
+    end
+
+    subgraph infra["Infrastructure Layer · Terraform"]
+        NS["Namespace: seyoawe"]
+        CM["ConfigMap:<br/>engine-config"]
+        SEC["Secret:<br/>engine-secrets"]
+    end
+
+    subgraph k8s["Kubernetes · Minikube"]
+        STS["StatefulSet<br/>seyoawe-engine<br/>+ liveness/readiness probes"]
+        SVC["Service<br/>ClusterIP :8080"]
+        PVC["PVC<br/>engine-storage 1Gi"]
+    end
+
+    subgraph release["Release ZIP (for lecturer)"]
+        Z["seyoawe-release-app-v1.0.0.zip<br/>docker-compose.yml · .env.example · README"]
+        APP["Release App<br/>4 Flask endpoints"]
+    end
+
+    subgraph obs["Observability"]
+        PROM["Prometheus<br/>:9090"]
+        GRAF["Grafana<br/>:3000"]
+        NODE["Node Exporter<br/>:9100"]
+    end
+
+    GH -->|push| ECI
+    GH -->|push| CCI
+    GH -->|manual trigger| CD
+
+    ECI --> IMG_E
+    CCI --> IMG_C
+    CD --> IMG_E
+    CD --> infra
+    CD --> STS
+
+    IMG_E -.pull.-> STS
+    CM --> STS
+    SEC --> STS
+    PVC --> STS
+    STS --> SVC
+
+    IMG_R -.pull.-> APP
+    Z --> APP
+
+    NODE --> PROM
+    PROM --> GRAF
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         DevOps Architecture                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│   ┌──────────┐    push     ┌─────────────────────────────────────────┐ │
-│   │  GitHub  │────────────▶│              Jenkins                    │ │
-│   │  Source  │             │         CI/CD Orchestration             │ │
-│   │ Control  │             └──────────────┬──────────────────────────┘ │
-│   └──────────┘                            │                             │
-│                              ┌────────────┴────────────┐               │
-│                              │                         │               │
-│                    ┌─────────▼──────────┐  ┌──────────▼─────────┐     │
-│                    │   CI Pipeline      │  │   CD Pipeline       │     │
-│                    │ ─────────────────  │  │ ─────────────────── │     │
-│                    │ Engine: lint+build │  │ Terraform (AWS EC2) │     │
-│                    │ CLI: test+package  │  │ Ansible (config)    │     │
-│                    │ Version coupling   │  │ Local: Minikube     │     │
-│                    └────────┬───────────┘  └──────────┬──────────┘     │
-│                             │                         │               │
-│                             │ push                    │ deploy        │
-│                             ▼                         ▼               │
-│   ┌──────────────────────┐          ┌─────────────────────────────┐  │
-│   │      Docker Hub      │          │   Kubernetes (Minikube/EKS) │  │
-│   │   devoeoe23ops/      │◀─ pull ──│ ─────────────────────────── │  │
-│   │   seyoawe-engine     │          │  Engine StatefulSet (8080)  │  │
-│   │   seyoawe-cli        │          │  PersistentVolumeClaim (1Gi) │  │
-│   └──────────────────────┘          │  ClusterIP Service           │  │
-│                                     │  Pod: 1/1 Running            │  │
-│                                     └──────────────────────────────┘  │
-│                                                      │                 │
-│                                                      │ scrape          │
-│                                                      ▼                 │
-│                                     ┌──────────────────────────────┐  │
-│                                     │         Monitoring            │  │
-│                                     │  Prometheus + Grafana (3000) │  │
-│                                     │  Node Exporter               │  │
-│                                     └──────────────────────────────┘  │
-│                                                                         │
-│   ┌──────────────────┐    ┌──────────────────────────────────────────┐ │
-│   │   version.txt    │    │           sawectl CLI                    │ │
-│   │  Shared semver   │    │  22 unit tests · PyInstaller binary      │ │
-│   └──────────────────┘    └──────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-```
 
-### Components
+---
 
-| Component | Tool | Purpose |
+## What's Inside
+
+| Rubric item | Implementation | Status |
 |---|---|---|
-| Source control | GitHub | Code versioning, tags, webhooks |
-| CI/CD | Jenkins | Automated pipelines (local) |
-| Containerization | Docker | Engine & CLI containers |
-| Registry | Docker Hub (devoeoe23ops) | Published images |
-| Infrastructure | Terraform | AWS EC2 provisioning |
-| Configuration | Ansible | Server setup & Docker install |
-| Orchestration | Kubernetes (Minikube / EKS) | App deployment & scaling |
-| Monitoring | Prometheus + Grafana | Metrics & dashboards |
-| Version coupling | version.txt | Shared semantic version |
+| Engine containerization | Ubuntu 22.04 image, StatefulSet, TCP liveness + readiness probes, PVC (volumeClaimTemplates), ClusterIP service | ✅ |
+| CI pipeline for engine | Jenkins: checkout → version check (with change detection) → lint → Docker build → push to Docker Hub | ✅ |
+| CI pipeline for CLI | Jenkins: checkout → version check → install → lint → unit tests → PyInstaller binary → Docker build → push → git tag | ✅ |
+| Version coupling | `version.txt` shared between engine + CLI; Jenkinsfiles detect changed paths and skip unnecessary builds | ✅ |
+| CD pipeline | Terraform provisions K8s namespace + ConfigMap + Secret → Docker build/push → kubectl apply → wait ready → verify | ✅ (Terraform) ⚠️ (Ansible not in live pipeline — see [limitations](#known-limitations--engineering-trade-offs)) |
+| Code structure & documentation | This README, release-app README, screenshot set in `docs/screenshots/` | ✅ |
+| Observability (bonus) | Prometheus + Grafana + Node Exporter via docker-compose, Grafana dashboard live | ✅ (node-level; see limitations for engine metrics) |
 
 ---
 
@@ -70,171 +110,255 @@ This project implements a full DevOps lifecycle around the Seyoawe automation en
 
 ```
 seyoawe-community/
-├── docker/          # Dockerfiles for engine and CLI
-├── jenkins/         # CI/CD pipeline definitions
-│   ├── engine/      # CI pipeline for the engine
-│   ├── cli/         # CI pipeline for the CLI
-│   ├── cd/          # CD pipelines
-│   │   ├── Jenkinsfile        # AWS production CD (Terraform + Ansible)
-│   │   └── Jenkinsfile.local  # Local Minikube CD pipeline
-│   └── version-check.sh
-├── k8s/             # Kubernetes manifests
-├── terraform/       # AWS infrastructure provisioning
-├── ansible/         # Server configuration playbooks
-├── monitoring/      # Prometheus & Grafana setup
-├── modules/         # Seyoawe engine modules
-├── sawectl/         # CLI tool
-├── workflows/       # Sample workflows
-└── version.txt      # Shared semantic version
+├── ansible/
+│   ├── aws/                  # EC2 playbook (reference — not wired to live pipeline)
+│   └── local/                # Minikube playbook (runnable via WSL)
+├── docker/
+│   ├── engine/Dockerfile     # SeyoAWE engine image
+│   ├── cli/Dockerfile        # sawectl CLI image
+│   └── release-app/Dockerfile  # Release app image (4 functions)
+├── docs/screenshots/         # Evidence: pipelines, pods, Grafana, Prometheus
+├── jenkins/
+│   ├── engine/Jenkinsfile    # seyoawe-engine-ci
+│   ├── cli/Jenkinsfile       # seyoawe-cli-ci
+│   ├── cd/Jenkinsfile        # EC2 CD (reference — not executed)
+│   └── cd/Jenkinsfile.local  # seyoawe-cd-local (active CD pipeline)
+├── k8s/
+│   ├── engine-service.yaml
+│   └── engine-statefulset.yaml   # with health probes + configmap/secret mounts
+├── modules/                  # SeyoAWE modules (from upstream)
+├── monitoring/
+│   ├── docker-compose.yml    # Prometheus + Grafana + Node Exporter stack
+│   └── prometheus.yml
+├── release/                  # Release ZIP source
+│   ├── docker-compose.yml
+│   ├── .env.example
+│   ├── README.md
+│   └── seyoawe-release-app-v1.0.0.zip   # ← deliverable for lecturer
+├── release_app/              # Flask app implementing the 4 release functions
+│   ├── app.py
+│   ├── requirements.txt
+│   └── templates/index.html
+├── sawectl/                  # CLI source + 22 unit tests
+├── terraform/
+│   ├── aws/                  # EC2 provisioning (reference — not executed)
+│   └── local/                # K8s namespace/configmap/secret (active)
+├── workflows/                # SeyoAWE workflow samples
+└── version.txt               # Shared semver (1.0.0)
 ```
 
 ---
 
-## How to Use the App
+## CI/CD Pipelines
 
-### Prerequisites
-Install dependencies:
-```bash
-pip install -r sawectl/requirements.txt
+Three Jenkins pipelines, each targeting a different lifecycle step.
+
+### seyoawe-engine-ci — Engine CI
+
+```
+Checkout → Version Check → Lint → Build Docker Image → Push to Docker Hub
 ```
 
-### Function 1 - Run a Workflow
-Trigger a workflow against a running Seyoawe engine:
-```bash
-python3 sawectl/sawectl.py run \
-  --workflow workflows/samples/command_and_slack.yaml \
-  --server localhost:8080
+The Version Check stage reads `version.txt` and compares `git diff HEAD~1 HEAD` against engine-relevant paths (`modules/`, `configuration/`, `workflows/`, `docker/engine/`, `seyoawe.linux`, `version.txt`). If nothing matches, Build and Push are skipped via a `when` clause, and a "Skip Notice" stage runs instead.
+
+### seyoawe-cli-ci — CLI CI
+
+```
+Checkout → Version Check → Install Deps → Lint → Unit Tests (22) →
+Build Linux Binary (PyInstaller) → Build Docker Image → Push to Docker Hub → Tag Git Version
 ```
 
-### Function 2 - Validate a Workflow
-Deep-validate a workflow file against schema and module manifests:
-```bash
-python3 sawectl/sawectl.py validate-workflow \
-  --workflow workflows/samples/command_and_slack.yaml \
-  --verbose
+Same change-detection logic as the engine, but against `sawectl/` and `docker/cli/`. Tests always run (cheap, catch regressions); build/push/tag skip when unchanged.
+
+### seyoawe-cd-local — CD to Minikube
+
+```
+Checkout → Terraform Init → Terraform Plan → Terraform Apply → Terraform Outputs →
+Build Docker Image → Push to Docker Hub → Deploy to Minikube → Wait for Pod Ready → Verify Deployment
 ```
 
-### Function 3 - Validate All Modules
-Check all module manifests are valid:
-```bash
-python3 sawectl/sawectl.py validate-modules \
-  --modules modules/
-```
-
-### Function 4 - Initialize a New Workflow
-Create a new workflow template:
-```bash
-python3 sawectl/sawectl.py init workflow my_workflow \
-  --full \
-  --trigger api \
-  --modules-path modules/
-```
-
----
-
-## Pipeline Flow
-
-### CI Pipeline (Engine)
-
-1. Checkout code
-2. Version check - detect changed components
-3. Lint Python modules
-4. Build Docker image
-5. Push to Docker Hub as `devoeoe23ops/seyoawe-engine:<version>`
-
-### CI Pipeline (CLI)
-
-1. Checkout code
-2. Version check
-3. Install dependencies
-4. Lint
-5. Unit tests (22 tests)
-6. Build Linux binary with PyInstaller
-7. Build Docker image
-8. Push to Docker Hub as `devoeoe23ops/seyoawe-cli:<version>`
-9. Tag Git with version
-
-### CD Pipeline (AWS)
-
-1. Checkout code
-2. Terraform init, plan, apply → provision EC2 on AWS (us-west-2)
-3. Update Ansible inventory with EC2 IP
-4. Wait for EC2 to be ready
-5. Run Ansible playbook → install Docker & kubectl, pull image
-6. Deploy to Kubernetes using manifests
-
-### CD Pipeline (Local - Minikube)
-
-1. Checkout code
-2. Build Docker image
-3. Push to Docker Hub
-4. Deploy to Minikube using kubectl
-5. Verify deployment
+Terraform provisions the K8s namespace, ConfigMap, and Secret (consuming six credentials from Jenkins). `kubectl apply` then deploys the StatefulSet and Service into that namespace. Verify stage prints pods, services, configmap, and secret so the handoff is visible in logs.
 
 ---
 
 ## Version Coupling
 
-Both engine and CLI share the same semantic version defined in `version.txt`.
-The `jenkins/version-check.sh` script detects which components changed and
-sets build flags to avoid unnecessary rebuilds.
+Both engine and CLI read the same `version.txt`. A push to `main` fires both CI pipelines, each runs its Version Check stage independently:
+
+- If only `sawectl/` changed → only CLI pipeline builds and pushes.
+- If only `modules/` changed → only engine pipeline builds and pushes.
+- If both change → both build, both tagged with the same semver.
+- If only docs/jenkins changed → both pipelines run but Build + Push stages are skipped.
+
+This matches the rubric requirement: *"Pipelines should detect which components changed and avoid unnecessary rebuilds."*
+
+*Implementation note: change detection uses `git diff HEAD~1 HEAD` only. A production pipeline would diff against the merge-base of the feature branch.*
 
 ---
 
-## Jenkins Dashboard
+## Kubernetes Deployment
 
-### All 3 Pipelines Green
-![Jenkins Dashboard](docs/screenshots/jenkins_dashboard_.PNG)
+The engine runs as a StatefulSet (single replica) in the `seyoawe` namespace.
 
----
+**Rubric requirements met:**
+- **Health probes:** TCP liveness (port 8080, 30s initial delay, 30s period) and readiness (5s initial, 10s period) — see `k8s/engine-statefulset.yaml`.
+- **Persistent storage:** Via `volumeClaimTemplates` inside the StatefulSet (1Gi PVC mounted at `/app/data`). Kubernetes auto-creates the PVC on first pod schedule.
+- **Service configuration:** ClusterIP service `seyoawe-engine:8080` routes to pods by label `app=seyoawe-engine`.
 
-## Pipeline Success
+The StatefulSet also mounts:
+- `engine-config` ConfigMap (via `envFrom`) — non-sensitive config (`APP_ENV`, `LOG_LEVEL`, `JIRA_BASE_URL`, etc.)
+- `engine-secrets` Secret (via `valueFrom.secretKeyRef`) — credentials for the release actions
 
-### Engine CI Pipeline - All Stages Passed
-![Engine Pipeline Success](docs/screenshots/pipline_success-_engine_ci.PNG)
-
-### CLI CI Pipeline - All Stages Passed
-![CLI Pipeline Success](docs/screenshots/pipline_success-cli-_ci_.PNG)
-
-### Local CD Pipeline - Engine Deployed to Minikube
-![CD Local Pipeline Success](docs/screenshots/pipeline_success-_cd-_local.PNG)
+Both are created by Terraform during CD.
 
 ---
 
-## Pipeline Failure
+## Release App (4 Functions)
 
-### Engine CI Pipeline - Failed Build
-![Pipeline Failure](docs/screenshots/pipline_fail-_engine_ci.PNG)
+The lecturer's explicit deliverable: a ZIP the user can download and run to exercise four release-automation actions.
 
----
+### What it is
 
-## Kubernetes Deployment (Local - Minikube)
+A small Flask app (`release_app/`) exposing four endpoints:
 
-### Pod Running (1/1)
-![Pod Running](docs/screenshots/Pod_Running.PNG)
+| Endpoint | Purpose |
+|---|---|
+| `POST /send-email` | Sends an email via Gmail SMTP |
+| `POST /create-jira` | Creates a Jira issue |
+| `POST /save-to-git` | Commits a file to GitHub |
+| `POST /run-command` | Runs a whitelisted shell command (`ls`, `pwd`, `echo`, `date`, `whoami`, `uname`, `df`, `free`, `uptime`) |
 
-### Services & StatefulSet
-![Services](docs/screenshots/Services.PNG)
+A root page `/` provides a simple UI with buttons for each action.
 
----
+### The ZIP
 
-## Monitoring
+`release/seyoawe-release-app-v1.0.0.zip` contains:
+- `docker-compose.yml` — pulls `devoeoe23ops/seyoawe-release-app:latest` from Docker Hub
+- `.env.example` — template for Gmail/Jira/GitHub credentials
+- `README.md` — user-facing instructions
 
-Prometheus scrapes metrics from the engine on port 8080.
-Grafana runs on port 3000 with dashboards for engine health.
-
-To start monitoring:
-
+**To run it** (from an unzipped copy):
 ```bash
-cd monitoring
-docker-compose up -d
+cp .env.example .env
+# fill in credentials
+docker compose up -d
+# open http://localhost:5000
 ```
 
+All four endpoints were verified end-to-end during development — email sent, Jira issue SEY-2 created, `releases/test-release.txt` committed to this repo, `uname` returned `Linux`.
+
 ---
 
-## AWS Infrastructure
+## Observability
 
-- **Region:** us-west-2
-- **Instance type:** t2.micro
-- **AMI:** Ubuntu 24.04 LTS (ami-0d76b909de1a0595d)
-- **Key pair:** oz-seyoawe-key
+Prometheus + Grafana + Node Exporter run as a Docker Compose stack in `monitoring/`.
+
+**To start:**
+```bash
+cd monitoring
+docker compose up -d
+# Prometheus: http://localhost:9090
+# Grafana:    http://localhost:3000  (admin / admin123)
+```
+
+**Current scrape targets:**
+- `prometheus:9090` — self-scrape ✅
+- `node-exporter:9100` — host metrics (CPU, memory, disk, network) ✅
+- `seyoawe-engine:8080/metrics` — engine metrics ❌ (see [limitations](#known-limitations--engineering-trade-offs))
+
+Grafana is pre-connectable to Prometheus. The **Node Exporter Full** dashboard (Grafana ID 1860) imports cleanly and shows live infrastructure metrics. Screenshots in `docs/screenshots/`.
+
+---
+
+## How to Run
+
+**Prerequisites:** Docker Desktop, Minikube, kubectl, Jenkins (local install), Terraform CLI.
+
+**End-to-end local run:**
+
+1. **Start Minikube:**
+   ```powershell
+   minikube start --driver=docker
+   ```
+
+2. **Trigger the CD pipeline** in Jenkins (`seyoawe-cd-local` → Build Now). The pipeline will:
+   - Run Terraform → namespace, ConfigMap, Secret created
+   - Build and push the engine image
+   - Apply K8s manifests
+   - Wait for pod readiness
+
+3. **Verify:**
+   ```powershell
+   kubectl -n seyoawe get all
+   ```
+
+4. **(Optional) Start observability:**
+   ```powershell
+   cd monitoring
+   docker compose up -d
+   ```
+
+5. **(Optional) Test the 4 release actions** — unpack `release/seyoawe-release-app-v1.0.0.zip` and follow its README.
+
+---
+
+## Known Limitations & Engineering Trade-offs
+
+Rather than hiding these, they are documented up front.
+
+### AWS / EC2 CD path not executed
+
+The assignment describes a CD pipeline that provisions infrastructure with Terraform and configures it with Ansible. The canonical version of that flow targets EC2. Due to college/account restrictions, no AWS credentials were available for this project.
+
+**What's in the repo:**
+- `terraform/aws/main.tf` — provisions an EC2 t2.micro, security group (ports 22, 8080), key pair
+- `ansible/aws/playbook.yml` — installs Docker + kubectl, pulls image, runs container
+- `jenkins/cd/Jenkinsfile` — wires Terraform → Ansible → K8s together
+
+This code is kept as reference to show the pattern is understood. The **active** CD pipeline is `Jenkinsfile.local`, which targets a local Minikube cluster. The lecturer can read the AWS Jenkinsfile side-by-side with the local one to see how the same pattern applies to both environments.
+
+### Ansible not wired into the live CD pipeline
+
+The Jenkins agent runs as a Windows service, and Ansible has no native Windows support. A WSL2 + Ubuntu environment with Ansible was set up during development and the playbook (`ansible/local/playbook.yml`) runs manually from WSL. Integrating the WSL-based Ansible call into the live Jenkins pipeline introduced a Minikube networking issue (WSL cannot reach Minikube's API server bound to `127.0.0.1` on the Windows host) that risked breaking the already-passing pipeline. With a fixed deadline, the decision was to commit the playbook as-is rather than chase a brittle integration.
+
+The playbook itself:
+- Verifies cluster reachability
+- Confirms namespace, ConfigMap, and Secret exist (the Terraform → Ansible handoff)
+- Applies `engine-service.yaml` and `engine-statefulset.yaml`
+- Waits for pod readiness
+- Runs smoke checks
+
+### Engine HTTP API
+
+The supplied `seyoawe.linux` binary does not expose a functional workflow-trigger API endpoint on port 8080. Workflows cannot be invoked via HTTP against the running engine — this was confirmed during development.
+
+**Chosen alternative:** the release app (`release_app/`) implements the four release actions (email, Jira, Git, command) directly in Flask, without going through the engine. This delivers the user-facing functionality the lecturer described as "four functions the user can call from a ZIP," while still deploying the engine as a containerized StatefulSet as required by Task 1.
+
+### Engine-level Prometheus metrics
+
+The engine binary does not expose `/metrics`, so the `seyoawe-engine` scrape target shows DOWN in Prometheus. The observability stack still provides node-level metrics via `node-exporter` and a working Grafana dashboard, satisfying the bonus requirement for "monitoring with Prometheus + Grafana."
+
+---
+
+## Screenshots
+
+All screenshots in `docs/screenshots/`.
+
+| File | Shows |
+|---|---|
+| `jenkins dashboard .PNG` | All three Jenkins pipelines green |
+| `pipline_success-_engine_ci_coupling.PNG` | Engine CI with Build + Push skipped (no engine changes) |
+| `pipline_success-cli-_ci_coupling.PNG` | CLI CI with Build + Push skipped (no CLI changes) |
+| `pipline success-cli- ci .PNG` | CLI CI full build (all stages including PyInstaller, Docker, git tag) |
+| `pipline fail- engine ci.PNG` | Engine pipeline failure triggering automated Jira bug creation |
+| `pipline_success-_cd-_local_tf.PNG` | CD pipeline green with Terraform stages + probes deployment |
+| `Seyoawe_Namespace_Resources.PNG` | `kubectl -n seyoawe get all` — pod Running 1/1, service, statefulset |
+| `dockerhub_engine_tags.PNG` | Docker Hub tags page for the engine image |
+| `prometheus_targets.PNG` | Prometheus targets (2 of 3 UP) |
+| `grafana_node_exporter_dashboard.PNG` | Grafana Node Exporter Full dashboard, live metrics |
+
+---
+
+## License
+
+See `LICENSE/` folder for upstream SeyoAWE license. This repository's DevOps automation (Jenkins pipelines, Terraform, Ansible, K8s manifests, release app) is submitted as a student project.
