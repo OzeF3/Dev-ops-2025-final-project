@@ -1,0 +1,28 @@
+# ============================================================================
+# SeyoAWE Release App - docker-compose.yml
+#
+# Usage (from inside the release ZIP):
+#   1. Copy .env.example to .env and fill in credentials
+#   2. docker compose up -d
+#   3. Open http://localhost:5000
+#
+# The app exposes 4 release functions via a small Flask UI.
+# ============================================================================
+
+services:
+  release-app:
+    image: devoeoe23ops/seyoawe-release-app:latest
+    container_name: seyoawe-release-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
